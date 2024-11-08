@@ -20,7 +20,9 @@ export default function HomePage() {
             'layout relative flex min-h-screen flex-col items-center justify-center py-12 text-center'
           )}
         >
-          <h1 className={cn('my-4 text-4xl text-primary-500')}>EventHub</h1>
+          <h1 className={cn('my-4 text-4xl text-primary-500')}>
+            EventHub - Production
+          </h1>
           <Button
             variant='default'
             className='bg-primary-500 text-white hover:bg-primary-600'
