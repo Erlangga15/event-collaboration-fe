@@ -1,9 +1,9 @@
 name: Code Check
 on:
   push:
-    branches: [main, develop, feature/*]
+    branches: [production, development, feature/*]
   pull_request:
-    branches: [main, develop, feature/*]
+    branches: [production, development, feature/*]
 
 concurrency:
   group: ${{ github.job }}-${{ github.ref }}
