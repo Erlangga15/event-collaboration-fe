@@ -4,6 +4,9 @@ import * as React from 'react';
 
 import '@/styles/globals.css';
 
+import { MainLayout } from '@/components/layouts/MainLayout';
+import { Providers } from '@/components/providers';
+
 import { siteConfig } from '@/constant/config';
 
 const encodeSans = Encode_Sans({
@@ -54,7 +57,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en' className={`${encodeSans.variable} ${mulish.variable}`}>
-      <body>{children}</body>
+      <body className='min-h-screen bg-background font-body antialiased'>
+        <Providers
+          attributes={{
+            html: { class: 'antialiased' }
+          }}
+        >
+          <MainLayout>{children}</MainLayout>
+        </Providers>
+      </body>
     </html>
   );
 }
