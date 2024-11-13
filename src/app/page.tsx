@@ -1,40 +1,89 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import * as React from 'react';
 
+import { CategoryFilters } from '@/components/events/CategoryFilters';
+import { CreateEventBanner } from '@/components/events/CreateEventBanner';
+import { EventGrid } from '@/components/events/EventGrid';
+import { FeaturedEvents } from '@/components/events/FeaturedEvents';
+import { SearchBar } from '@/components/shared/SearchBar';
 import { Button } from '@/components/ui/button';
 
 export default function HomePage() {
   return (
-    <section className='space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32'>
-      <div className='layout flex max-w-5xl flex-col items-center gap-4 text-center'>
-        <Link
-          href='#'
-          className='rounded-2xl bg-muted px-4 py-1.5 text-sm font-medium'
-        >
-          🎉 Launching Soon
-        </Link>
-        <h1 className='font-heading text-3xl font-bold sm:text-5xl md:text-6xl lg:text-7xl'>
-          Your Next{' '}
-          <span className='text-primary-500'>Event Management Platform</span>
-        </h1>
-        <p className='max-w-2xl leading-normal text-muted-foreground sm:text-xl sm:leading-8'>
-          Create, manage, and discover events with ease. Join our platform to
-          connect with event organizers and attendees.
-        </p>
-        <div className='space-x-4'>
+    <main>
+      {/* Hero Section */}
+      <section className='relative min-h-[600px] space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32'>
+        <div className='absolute inset-0 z-0'>
+          <Image
+            src='/images/hero-bg.webp'
+            alt='Hero background'
+            fill
+            className='object-cover brightness-[0.80]'
+            priority
+            sizes='100vw'
+          />
+        </div>
+        <div className='layout relative z-10 flex max-w-5xl flex-col items-center gap-4 text-center'>
+          <h1 className='font-heading text-3xl font-bold text-white sm:text-5xl md:text-6xl lg:text-7xl'>
+            Discover Amazing{' '}
+            <span className='text-primary-700'>Events Near You</span>
+          </h1>
+          <p className='max-w-2xl text-lg text-gray-100 sm:text-xl'>
+            Find and book tickets for concerts, festivals, workshops, and more.
+            Your next unforgettable experience starts here.
+          </p>
+          <SearchBar className='w-full max-w-2xl' />
+        </div>
+      </section>
+
+      {/* Category Filters */}
+      <section className='layout py-12'>
+        <CategoryFilters />
+      </section>
+
+      {/* Upcoming Events */}
+      <section className='layout space-y-6 py-12'>
+        <h2 className='font-heading text-2xl font-bold sm:text-3xl'>
+          Upcoming Events
+        </h2>
+        <EventGrid />
+        <div className='flex justify-center'>
           <Button
-            size='lg'
-            className='bg-primary-500 text-white hover:bg-primary-600'
+            variant='secondary'
+            asChild
+            className='group border-primary-500 bg-primary-50 font-bold text-primary-500 hover:bg-primary-100'
           >
-            Get Started
-          </Button>
-          <Button size='lg' variant='outline'>
-            Learn More
+            <Link href='/events' className='flex items-center gap-2'>
+              View all events
+            </Link>
           </Button>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Create Event Banner */}
+      <CreateEventBanner />
+
+      {/* Featured Events */}
+      <section className='layout space-y-6 py-12'>
+        <h2 className='font-heading text-2xl font-bold sm:text-3xl'>
+          Featured Events
+        </h2>
+        <FeaturedEvents />
+        <div className='flex justify-center'>
+          <Button
+            variant='secondary'
+            asChild
+            className='group border-primary-500 bg-primary-50 font-bold text-primary-500 hover:bg-primary-100'
+          >
+            <Link href='/events' className='flex items-center gap-2'>
+              View all events
+            </Link>
+          </Button>
+        </div>
+      </section>
+    </main>
   );
 }

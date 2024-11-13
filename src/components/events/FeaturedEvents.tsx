@@ -14,7 +14,10 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import { FEATURED_EVENTS } from '@/constant/event-data';
 
+import { FeaturedEventsSkeleton } from './FeaturedEventsSkeleton';
+
 export const FeaturedEvents = () => {
+  const [isLoading, setIsLoading] = React.useState(true);
   const [sliderRef] = useKeenSlider({
     slides: {
       perView: 1.2,
@@ -29,6 +32,18 @@ export const FeaturedEvents = () => {
       }
     }
   });
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <FeaturedEventsSkeleton />;
+  }
 
   return (
     <div ref={sliderRef} className='keen-slider overflow-visible'>
