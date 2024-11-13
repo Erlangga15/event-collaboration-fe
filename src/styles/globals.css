@@ -158,6 +158,31 @@
       0 2px,
       100% 2px;
   }
+  .ribbon-container {
+    position: relative;
+    overflow: visible;
+  }
+
+  .ribbon-right {
+    position: absolute;
+    width: 120px;
+    height: 35px;
+    background: rgb(var(--tw-color-primary-500));
+    right: -10px;
+    bottom: -15px;
+  }
+
+  .ribbon-right::before {
+    content: '';
+    position: absolute;
+    bottom: 35px;
+    right: 0px;
+    width: 10px;
+    height: 10px;
+    border-top-right-radius: 10px;
+    background: rgb(var(--tw-color-primary-900));
+    z-index: 2;
+  }
 }
 
 @layer base {

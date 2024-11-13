@@ -85,7 +85,12 @@ module.exports = {
 
     //#region  //*=========== Tailwind ===========
     'tailwindcss/classnames-order': 'warn',
-    'tailwindcss/no-custom-classname': 'warn',
+    'tailwindcss/no-custom-classname': [
+      'warn',
+      {
+        whitelist: ['keen-slider', 'keen-slider__slide']
+      }
+    ],
     'tailwindcss/no-contradicting-classname': 'error',
     'tailwindcss/enforces-shorthand': 'warn'
     //#endregion  //*======== Tailwind ===========
