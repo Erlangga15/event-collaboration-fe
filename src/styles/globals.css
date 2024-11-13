@@ -193,3 +193,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .keen-slider {
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    width: 100%;
+  }
+
+  .keen-slider__slide {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    overflow: visible !important;
+    margin-right: 16px;
+    flex: 0 0 calc((100% - 16px) / 1.2);
+  }
+
+  @media (min-width: 768px) {
+    .keen-slider__slide {
+      margin-right: 16px;
+      flex: 0 0 calc((100% - 32px) / 2.2);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .keen-slider__slide {
+      margin-right: 16px;
+      flex: 0 0 calc((100% - 48px) / 3.2);
+    }
+  }
+}
