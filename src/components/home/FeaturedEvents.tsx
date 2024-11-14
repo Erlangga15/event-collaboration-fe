@@ -12,7 +12,7 @@ import { formatPrice } from '@/lib/utils';
 import { Icons } from '@/components/shared/Icons';
 import { Card, CardContent } from '@/components/ui/card';
 
-import { FEATURED_EVENTS } from '@/constant/event-data';
+import { FEATURED_EVENTS } from '@/constant/data/events';
 
 import { FeaturedEventsSkeleton } from './FeaturedEventsSkeleton';
 

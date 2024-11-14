@@ -7,14 +7,15 @@ import { cn } from '@/lib/utils';
 
 import { Icons } from '@/components/shared/Icons';
 
-import { type CategoryId, CATEGORIES } from '@/constant/event-data';
+import { CATEGORIES } from '@/constant/data/categories';
+import type { Category } from '@/constant/types/event';
 
 export const CategoryFilters = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentCategory = searchParams.get('category') as CategoryId | null;
+  const currentCategory = searchParams.get('category');
 
-  const handleCategoryClick = (categoryId: CategoryId) => {
+  const handleCategoryClick = (categoryId: Category['id']) => {
     const params = new URLSearchParams(searchParams.toString());
     if (currentCategory === categoryId) {
       params.delete('category');
@@ -29,7 +30,7 @@ export const CategoryFilters = () => {
       <h2 className='font-heading text-2xl font-bold'>Explore Categories</h2>
       <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'>
         {CATEGORIES.map(({ id, label, description, icon }) => {
-          const Icon = Icons[icon];
+          const Icon = Icons[icon as keyof typeof Icons];
           return (
             <button
               key={id}

@@ -4,10 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import * as React from 'react';
 
-import { CategoryFilters } from '@/components/events/CategoryFilters';
-import { CreateEventBanner } from '@/components/events/CreateEventBanner';
-import { EventGrid } from '@/components/events/EventGrid';
-import { FeaturedEvents } from '@/components/events/FeaturedEvents';
+import { CategoryFilters } from '@/components/home/CategoryFilters';
+import { CreateEventBanner } from '@/components/home/CreateEventBanner';
+import { EventGrid } from '@/components/home/EventGrid';
+import { FeaturedEvents } from '@/components/home/FeaturedEvents';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { Button } from '@/components/ui/button';
 

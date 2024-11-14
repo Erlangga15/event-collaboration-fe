@@ -6,21 +6,12 @@ import * as React from 'react';
 
 import { cn, formatPrice } from '@/lib/utils';
 
-import { EventCardSkeleton } from '@/components/events/EventCardSkeleton';
+import { EventCardSkeleton } from '@/components/home/EventCardSkeleton';
 import { Icons } from '@/components/shared/Icons';
 import { Card, CardContent } from '@/components/ui/card';
 
-import { UPCOMING_EVENTS } from '@/constant/event-data';
-
-interface Event {
-  id: string;
-  title: string;
-  image: string;
-  date: string;
-  location: string;
-  price: number;
-  category: string;
-}
+import { UPCOMING_EVENTS } from '@/constant/data/events';
+import type { Event } from '@/constant/types/event';
 
 interface EventGridProps {
   className?: string;
@@ -38,10 +29,7 @@ export const EventGrid = ({ className }: EventGridProps) => {
       const nextEvents = UPCOMING_EVENTS.slice(
         currentLength,
         currentLength + 6
-      ).map((event) => ({
-        ...event,
-        id: `${event.id}-${currentLength + Math.random()}`
-      }));
+      );
 
       setEvents((prev) => [...prev, ...nextEvents]);
       setIsLoading(false);
