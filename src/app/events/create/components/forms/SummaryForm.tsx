@@ -189,25 +189,40 @@ export function SummaryForm() {
           <CardDescription>Review your promotional offers</CardDescription>
         </CardHeader>
         <CardContent className='space-y-4'>
-          {promotions.promotions && promotions.promotions.length > 0 ? (
-            promotions.promotions.map((promo, index) => (
-              <div key={index} className='space-y-4 rounded-lg border p-4'>
-                <div className='flex items-center justify-between'>
-                  <Label className='text-base'>{promo.code}</Label>
-                  <span className='text-sm font-medium'>
-                    {promo.discount}% off
+          {promotions.promotion ? (
+            <div className='space-y-4 rounded-lg border p-4'>
+              <div className='flex items-center justify-between'>
+                <Label className='text-base'>
+                  Code:{' '}
+                  <span className='font-semibold'>
+                    {promotions.promotion.code}s
                   </span>
+                </Label>
+                <span className='text-sm font-medium'>
+                  {promotions.promotion.type === 'percentage'
+                    ? `${promotions.promotion.value}% off`
+                    : formatToIDR(promotions.promotion.value)}
+                </span>
+              </div>
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label>Type</Label>
+                  <p className='text-sm capitalize text-muted-foreground'>
+                    {promotions.promotion.type === 'percentage'
+                      ? 'Percentage Discount'
+                      : 'Fixed Amount'}
+                  </p>
                 </div>
                 <div className='space-y-2'>
                   <Label>Maximum Uses</Label>
                   <p className='text-sm text-muted-foreground'>
-                    {promo.maxUses} times
+                    {promotions.promotion.maxUses} times
                   </p>
                 </div>
               </div>
-            ))
+            </div>
           ) : (
-            <p className='text-sm text-muted-foreground'>No promotions added</p>
+            <p className='text-sm text-muted-foreground'>No promotion added</p>
           )}
         </CardContent>
       </Card>

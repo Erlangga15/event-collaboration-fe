@@ -59,7 +59,12 @@ const initialState: EventFormState = {
     ]
   },
   promotions: {
-    promotions: []
+    promotion: {
+      code: '',
+      type: 'percentage',
+      value: 0,
+      maxUses: 1
+    }
   }
 };
 

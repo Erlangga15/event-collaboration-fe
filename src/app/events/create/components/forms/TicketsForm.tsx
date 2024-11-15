@@ -171,14 +171,27 @@ export function TicketsForm() {
                       <FormItem>
                         <FormLabel>Price</FormLabel>
                         <FormControl>
-                          <Input
-                            type='number'
-                            placeholder='Enter ticket price'
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
+                          <div className='relative'>
+                            <span className='absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>
+                              Rp
+                            </span>
+                            <Input
+                              type='number'
+                              className='pl-9'
+                              {...field}
+                              value={field.value === 0 ? '' : field.value}
+                              onChange={(e) => {
+                                const value =
+                                  e.target.value === ''
+                                    ? 0
+                                    : Number(e.target.value);
+                                field.onChange(value);
+                              }}
+                              disabled={
+                                form.watch(`tickets.${index}.type`) !== 'paid'
+                              }
+                            />
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -195,11 +208,15 @@ export function TicketsForm() {
                       <FormControl>
                         <Input
                           type='number'
-                          placeholder='Enter ticket quantity'
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
+                          value={field.value === 0 ? '' : field.value}
+                          onChange={(e) => {
+                            const value =
+                              e.target.value === ''
+                                ? 0
+                                : Number(e.target.value);
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />

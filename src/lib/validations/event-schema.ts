@@ -48,20 +48,42 @@ export const ticketsSchema = z.object({
   tickets: z.array(ticketSchema).min(1, 'Please add at least one ticket')
 });
 
-const promotionSchema = z.object({
-  code: z.string().min(1, 'Please enter a promotion code'),
-  discount: z
-    .number()
-    .min(0, 'Discount must be greater than or equal to 0')
-    .max(100, 'Discount must be less than or equal to 100'),
-  maxUses: z
-    .number()
-    .min(1, 'Maximum uses must be at least 1')
-    .max(1000, 'Maximum uses must be less than 1000')
-});
+const promotionSchema = z
+  .object({
+    code: z.string().min(1, 'Please enter a promotion code'),
+    type: z.enum(['percentage', 'fixed']),
+    value: z
+      .number()
+      .min(0, 'Discount value must be greater than or equal to 0')
+      .refine(
+        (val) => {
+          return true;
+        },
+        {
+          message: 'Invalid discount value',
+          path: ['value']
+        }
+      ),
+    maxUses: z
+      .number()
+      .min(1, 'Maximum uses must be at least 1')
+      .max(1000, 'Maximum uses must be less than 1000')
+  })
+  .refine(
+    (data) => {
+      if (data.type === 'percentage') {
+        return data.value <= 100;
+      }
+      return true;
+    },
+    {
+      message: 'Percentage discount cannot be greater than 100%',
+      path: ['value']
+    }
+  );
 
 export const promotionsSchema = z.object({
-  promotions: z.array(promotionSchema).optional()
+  promotion: promotionSchema
 });
 
 export const eventFormSchema = z.object({
