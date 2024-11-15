@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
-import { formatPrice } from '@/lib/utils';
+import { formatToIDR } from '@/lib/utils';
 
 import { Icons } from '@/components/shared/Icons';
 import { Button } from '@/components/ui/button';
@@ -117,15 +117,15 @@ export const TicketSelection = ({ event }: TicketSelectionProps) => {
             <div className='space-y-2 text-sm'>
               <div className='flex justify-between'>
                 <span>Subtotal</span>
-                <span>{formatPrice(subtotal)}</span>
+                <span>{formatToIDR(subtotal)}</span>
               </div>
               <div className='flex justify-between'>
                 <span>Service Fee</span>
-                <span>{formatPrice(serviceFee)}</span>
+                <span>{formatToIDR(serviceFee)}</span>
               </div>
               <div className='flex justify-between border-t pt-2 font-medium'>
                 <span>Total</span>
-                <span>{formatPrice(total)}</span>
+                <span>{formatToIDR(total)}</span>
               </div>
             </div>
 

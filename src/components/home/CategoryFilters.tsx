@@ -27,7 +27,9 @@ export const CategoryFilters = () => {
 
   return (
     <div className='space-y-4'>
-      <h2 className='font-heading text-2xl font-bold'>Explore Categories</h2>
+      <h2 className='font-heading text-2xl font-bold'>
+        Explore <span className='text-primary-500'>Categories</span>
+      </h2>
       <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'>
         {CATEGORIES.map(({ id, label, description, icon }) => {
           const Icon = Icons[icon as keyof typeof Icons];

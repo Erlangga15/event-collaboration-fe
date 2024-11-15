@@ -7,7 +7,7 @@ import * as React from 'react';
 
 import 'keen-slider/keen-slider.min.css';
 
-import { formatPrice } from '@/lib/utils';
+import { formatToIDR } from '@/lib/utils';
 
 import { Icons } from '@/components/shared/Icons';
 import { Card, CardContent } from '@/components/ui/card';
@@ -86,7 +86,7 @@ export const FeaturedEvents = () => {
               </div>
               <div className='border-t pt-3'>
                 <span className='font-bold text-primary-500'>
-                  {event.price === 0 ? 'Gratis' : formatPrice(event.price)}
+                  {event.price === 0 ? 'Gratis' : formatToIDR(event.price)}
                 </span>
               </div>
             </CardContent>

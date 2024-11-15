@@ -2,7 +2,7 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn, formatToIDR } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -124,9 +124,13 @@ export function FilterPanel({
             handleFilterChange({ priceRange: value as [number, number] })
           }
         />
-        <div className='flex justify-between text-sm text-gray-500'>
-          <span>Rp {filters.priceRange[0].toLocaleString()}</span>
-          <span>Rp {filters.priceRange[1].toLocaleString()}</span>
+        <div className='flex justify-between'>
+          <span>Min Price</span>
+          <span>{formatToIDR(filters.priceRange[0])}</span>
+        </div>
+        <div className='flex justify-between'>
+          <span>Max Price</span>
+          <span>{formatToIDR(filters.priceRange[1])}</span>
         </div>
       </div>
 

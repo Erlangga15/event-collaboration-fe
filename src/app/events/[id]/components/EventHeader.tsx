@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import * as React from 'react';
 
-import { formatPrice } from '@/lib/utils';
+import { formatToIDR } from '@/lib/utils';
 
 import { Icons } from '@/components/shared/Icons';
 
@@ -53,7 +53,7 @@ export const EventHeader = ({ event }: EventHeaderProps) => {
               <div className='flex items-center gap-2'>
                 <Icons.ticket className='size-5' />
                 <span className='text-lg font-medium'>
-                  {event.price === 0 ? 'Free' : formatPrice(event.price)}
+                  {event.price === 0 ? 'Free' : formatToIDR(event.price)}
                 </span>
               </div>
             </div>

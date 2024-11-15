@@ -154,5 +154,4 @@ export const UPCOMING_EVENTS_DETAILS: Event[] = [
     ],
     reviews: []
   }
-  // Add more events as needed
 ];

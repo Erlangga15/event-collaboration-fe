@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import * as React from 'react';
 
-import { cn, formatPrice } from '@/lib/utils';
+import { cn, formatToIDR } from '@/lib/utils';
 
 import { EventCardSkeleton } from '@/components/home/EventCardSkeleton';
 import { Icons } from '@/components/shared/Icons';
@@ -96,7 +96,7 @@ export const EventGrid = ({
                       <span className='font-bold text-primary-500'>
                         {event.price === 0
                           ? 'Gratis'
-                          : formatPrice(event.price)}
+                          : formatToIDR(event.price)}
                       </span>
                     </div>
                   </CardContent>
