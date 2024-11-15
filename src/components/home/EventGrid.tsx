@@ -15,14 +15,22 @@ import type { Event } from '@/constant/types/event';
 
 interface EventGridProps {
   className?: string;
+  events?: Event[];
+  isLoading?: boolean;
+  showLoadMore?: boolean;
 }
 
-export const EventGrid = ({ className }: EventGridProps) => {
+export const EventGrid = ({
+  className,
+  events: propEvents,
+  isLoading = false,
+  showLoadMore = false
+}: EventGridProps) => {
   const [events, setEvents] = React.useState<Event[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [localLoading, setLocalLoading] = React.useState(true);
 
   const loadMore = React.useCallback(() => {
-    setIsLoading(true);
+    setLocalLoading(true);
     // Simulate API call
     setTimeout(() => {
       const currentLength = events.length;
@@ -32,22 +40,27 @@ export const EventGrid = ({ className }: EventGridProps) => {
       );
 
       setEvents((prev) => [...prev, ...nextEvents]);
-      setIsLoading(false);
+      setLocalLoading(false);
     }, 800);
   }, [events.length]);
 
   React.useEffect(() => {
-    loadMore();
-  }, [loadMore]);
+    if (!propEvents) {
+      loadMore();
+    }
+  }, [loadMore, propEvents]);
+
+  const displayEvents = propEvents || events;
+  const loading = isLoading || localLoading;
 
   return (
     <div className={cn('space-y-8', className)}>
       <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-        {isLoading && events.length === 0
+        {loading && displayEvents.length === 0
           ? Array.from({ length: 8 }).map((_, index) => (
               <EventCardSkeleton key={index} />
             ))
-          : events.map((event) => (
+          : displayEvents.map((event) => (
               <Link key={event.id} href={`/events/${event.id}`}>
                 <Card className='group relative h-full transition-all hover:shadow-lg'>
                   <div className='ribbon-container'>

@@ -14,9 +14,17 @@ import { SearchSuggestions } from './SearchSuggestions';
 
 interface SearchBarProps {
   className?: string;
+  onSearch?: (value: string) => void;
+  placeholder?: string;
+  variant?: 'default' | 'advanced';
 }
 
-export const SearchBar = ({ className }: SearchBarProps) => {
+export const SearchBar = ({
+  className,
+  onSearch,
+  placeholder = 'Search events, venues, or cities...',
+  variant = 'default'
+}: SearchBarProps) => {
   const router = useRouter();
   const [query, setQuery] = React.useState('');
   const [isFocused, setIsFocused] = React.useState(false);
@@ -27,9 +35,22 @@ export const SearchBar = ({ className }: SearchBarProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      router.push(`/events?q=${encodeURIComponent(query.trim())}`);
-      setIsFocused(false);
-      inputRef.current?.blur();
+      if (variant === 'default') {
+        router.push(`/events?q=${encodeURIComponent(query.trim())}`);
+        setIsFocused(false);
+        inputRef.current?.blur();
+      } else if (onSearch) {
+        onSearch(query.trim());
+      }
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    setIsLoading(true);
+    if (variant === 'advanced' && onSearch) {
+      onSearch(value);
     }
   };
 
@@ -42,12 +63,9 @@ export const SearchBar = ({ className }: SearchBarProps) => {
             ref={inputRef}
             type='text'
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setIsLoading(true);
-            }}
+            onChange={handleChange}
             onFocus={() => setIsFocused(true)}
-            placeholder='Search events, venues, or cities...'
+            placeholder={placeholder}
             className='h-full flex-1 border-0 bg-transparent p-0'
             ringOnFocus={false}
           />
@@ -74,7 +92,7 @@ export const SearchBar = ({ className }: SearchBarProps) => {
         </div>
       </form>
 
-      {isFocused && debouncedQuery.length >= 2 && (
+      {variant === 'default' && isFocused && debouncedQuery.length >= 2 && (
         <SearchSuggestions
           query={debouncedQuery}
           onClose={() => {
