@@ -3,6 +3,8 @@
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import * as React from 'react';
 
+import { AuthProvider } from '@/components/providers/AuthProvider';
+
 export interface ProvidersProps {
   children: React.ReactNode;
   attributes?: {
@@ -10,15 +12,17 @@ export interface ProvidersProps {
   };
 }
 
-export const Providers = ({ children, attributes }: ProvidersProps) => {
+export function Providers({ children, attributes }: Readonly<ProvidersProps>) {
   return (
-    <NextThemesProvider
-      attribute='class'
-      defaultTheme='system'
-      enableSystem
-      {...attributes}
-    >
-      {children}
-    </NextThemesProvider>
+    <AuthProvider>
+      <NextThemesProvider
+        attribute='class'
+        defaultTheme='system'
+        enableSystem
+        {...attributes}
+      >
+        {children}
+      </NextThemesProvider>
+    </AuthProvider>
   );
-};
+}
