@@ -6,6 +6,8 @@ import axios, {
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
 
+import { RegisterFormType } from '@/lib/validations/auth-schema';
+
 import { API_URL } from '@/constant/url';
 
 import {
@@ -26,7 +28,7 @@ export const COOKIE_OPTIONS = {
   secure: true,
   sameSite: 'strict' as const,
   path: '/',
-  expires: 7 // 7 days
+  expires: 7
 };
 
 const axiosInstance = axios.create({
@@ -196,6 +198,34 @@ export const login = async (
   }
 };
 
+const register = async (data: RegisterFormType): Promise<LoginResponse> => {
+  try {
+    const response = await axiosInstance.post<LoginResponse>(
+      '/api/v1/auth/register',
+      {
+        fullName: data.step1.fullName,
+        email: data.step1.email,
+        password: data.step1.password,
+        phone: data.step2.phone,
+        role: data.step2.role,
+        referralCode: data.step3.referralCode
+      }
+    );
+
+    const transformedResponse = transformLoginResponse(response.data);
+    setAuthTokens(transformedResponse.tokens);
+    setUserCookie(transformedResponse.user);
+    startRefreshTokenTimer(transformedResponse.tokens.accessToken);
+
+    return transformedResponse;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      throw new Error(error.response?.data?.message || 'Registration failed');
+    }
+    throw error;
+  }
+};
+
 export const logout = async (): Promise<void> => {
   try {
     const accessToken = getAccessToken();
@@ -230,6 +260,7 @@ export const isAuthenticated = (): boolean => {
 export const authService = {
   login,
   logout,
+  register,
   isAuthenticated,
   getAccessToken,
   getUserFromCookie

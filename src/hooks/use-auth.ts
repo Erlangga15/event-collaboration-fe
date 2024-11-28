@@ -2,6 +2,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
 import { authService } from '@/lib/auth';
+import { RegisterFormType } from '@/lib/validations/auth-schema';
 
 import { AuthState, LoginRequest, UserDetails } from '@/types/auth';
 
@@ -98,6 +99,30 @@ export const useAuth = () => {
     }
   };
 
+  const register = async (data: RegisterFormType) => {
+    try {
+      const response = await authService.register(data);
+      setState({
+        user: response.user,
+        tokens: response.tokens,
+        isAuthenticated: true,
+        isLoading: false
+      });
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 100);
+      return response;
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        user: null,
+        tokens: null,
+        isAuthenticated: false
+      }));
+      throw error;
+    }
+  };
+
   const updateUser = (user: UserDetails) => {
     setState((prev) => ({
       ...prev,
@@ -109,6 +134,7 @@ export const useAuth = () => {
     ...state,
     login,
     logout,
+    register,
     updateUser
   };
 };
