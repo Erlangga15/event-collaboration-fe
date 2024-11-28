@@ -76,15 +76,26 @@ export const useAuth = () => {
     }
   };
 
-  const logout = () => {
-    authService.logout();
-    setState({
-      user: null,
-      tokens: null,
-      isAuthenticated: false,
-      isLoading: false
-    });
-    router.push('/login');
+  const logout = async () => {
+    try {
+      await authService.logout();
+      setState({
+        user: null,
+        tokens: null,
+        isAuthenticated: false,
+        isLoading: false
+      });
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      setState({
+        user: null,
+        tokens: null,
+        isAuthenticated: false,
+        isLoading: false
+      });
+      router.push('/login');
+    }
   };
 
   const updateUser = (user: UserDetails) => {

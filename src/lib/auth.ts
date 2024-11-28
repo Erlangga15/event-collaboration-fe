@@ -16,9 +16,18 @@ import {
   UserDetails
 } from '@/types/auth';
 
-const AUTH_TOKEN_KEY = 'auth_token';
-const REFRESH_TOKEN_KEY = 'refresh_token';
-const USER_COOKIE_KEY = 'user_data';
+export const COOKIE_KEYS = {
+  AUTH_TOKEN: 'auth_token',
+  REFRESH_TOKEN: 'refresh_token',
+  USER_DATA: 'user_data'
+} as const;
+
+export const COOKIE_OPTIONS = {
+  secure: true,
+  sameSite: 'strict' as const,
+  path: '/',
+  expires: 7 // 7 days
+};
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:8080',
@@ -29,30 +38,23 @@ const axiosInstance = axios.create({
 
 let refreshTokenTimeout: NodeJS.Timeout | undefined;
 
-const setTokens = (tokens: AuthTokens) => {
-  document.cookie = `${AUTH_TOKEN_KEY}=${tokens.accessToken}; path=/; max-age=3600; secure; samesite=strict`;
-  document.cookie = `${REFRESH_TOKEN_KEY}=${tokens.refreshToken}; path=/; max-age=86400; secure; samesite=strict`;
+const setAuthTokens = (tokens: AuthTokens) => {
+  Cookies.set(COOKIE_KEYS.AUTH_TOKEN, tokens.accessToken, COOKIE_OPTIONS);
+  Cookies.set(COOKIE_KEYS.REFRESH_TOKEN, tokens.refreshToken, COOKIE_OPTIONS);
 };
 
-const clearTokens = () => {
-  document.cookie = `${AUTH_TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-  document.cookie = `${REFRESH_TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+const clearAuthCookies = () => {
+  Cookies.remove(COOKIE_KEYS.AUTH_TOKEN, { path: '/' });
+  Cookies.remove(COOKIE_KEYS.REFRESH_TOKEN, { path: '/' });
+  Cookies.remove(COOKIE_KEYS.USER_DATA, { path: '/' });
 };
 
 const getAccessToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  const cookie = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${AUTH_TOKEN_KEY}=`));
-  return cookie ? cookie.split('=')[1] : null;
+  return Cookies.get(COOKIE_KEYS.AUTH_TOKEN) || null;
 };
 
 const getRefreshToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  const cookie = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${REFRESH_TOKEN_KEY}=`));
-  return cookie ? cookie.split('=')[1] : null;
+  return Cookies.get(COOKIE_KEYS.REFRESH_TOKEN) || null;
 };
 
 const stopRefreshTokenTimer = () => {
@@ -83,34 +85,26 @@ const refreshToken = async (): Promise<void> => {
       }
     );
 
-    setTokens(response.data.tokens);
+    setAuthTokens(response.data.tokens);
     startRefreshTokenTimer(response.data.tokens.accessToken);
   } catch (error) {
-    clearTokens();
+    clearAuthCookies();
     throw error;
   }
 };
 
 const setUserCookie = (user: UserDetails) => {
-  Cookies.set(USER_COOKIE_KEY, JSON.stringify(user), {
-    expires: 7, // 7 days
-    secure: true,
-    sameSite: 'strict'
-  });
+  Cookies.set(COOKIE_KEYS.USER_DATA, JSON.stringify(user), COOKIE_OPTIONS);
 };
 
 const getUserFromCookie = (): UserDetails | null => {
-  const userCookie = Cookies.get(USER_COOKIE_KEY);
+  const userCookie = Cookies.get(COOKIE_KEYS.USER_DATA);
   if (!userCookie) return null;
   try {
     return JSON.parse(userCookie);
   } catch {
     return null;
   }
-};
-
-const clearUserCookie = () => {
-  Cookies.remove(USER_COOKIE_KEY);
 };
 
 const setupAxiosInterceptors = () => {
@@ -177,7 +171,7 @@ export const login = async (
     if (response.data?.data) {
       console.log('response.data.data', response.data.data);
       const transformedResponse = transformLoginResponse(response.data.data);
-      setTokens(transformedResponse.tokens);
+      setAuthTokens(transformedResponse.tokens);
       setUserCookie(transformedResponse.user);
       startRefreshTokenTimer(transformedResponse.tokens.accessToken);
       return transformedResponse;
@@ -186,8 +180,7 @@ export const login = async (
     throw new Error('No data in response');
   } catch (error: any) {
     console.log('error', error);
-    clearTokens();
-    clearUserCookie();
+    clearAuthCookies();
 
     if (error.response?.data?.message) {
       throw new Error(
@@ -205,15 +198,19 @@ export const login = async (
 
 export const logout = async (): Promise<void> => {
   try {
-    const token = getAccessToken();
-    if (token) {
+    const accessToken = getAccessToken();
+    const refreshToken = getRefreshToken();
+
+    if (accessToken && refreshToken) {
       await axiosInstance.post(String(API_URL.auth.logout), {
-        accessToken: token
+        accessToken,
+        refreshToken
       });
     }
+  } catch (error) {
+    console.error('Logout error:', error);
   } finally {
-    clearTokens();
-    clearUserCookie();
+    clearAuthCookies();
     stopRefreshTokenTimer();
   }
 };

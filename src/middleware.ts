@@ -2,6 +2,8 @@ import { jwtDecode } from 'jwt-decode';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { COOKIE_KEYS } from '@/lib/auth';
+
 const PUBLIC_PATHS = ['/login', '/register', '/', '/events'];
 const PROTECTED_PATHS = ['/dashboard', '/events/create'];
 const ROLE_PATHS = {
@@ -42,7 +44,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get('auth_token')?.value;
+  const token = request.cookies.get(COOKIE_KEYS.AUTH_TOKEN)?.value;
 
   if (isPublicPath(pathname)) {
     if (token && (pathname === '/login' || pathname === '/register')) {
