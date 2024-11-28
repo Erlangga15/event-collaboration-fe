@@ -37,7 +37,6 @@ function getRedirectUrl(request: NextRequest, path: string) {
 }
 
 export async function middleware(request: NextRequest) {
-  // Skip API routes
   if (request.nextUrl.pathname.startsWith('/api')) {
     return NextResponse.next();
   }
@@ -45,57 +44,40 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('auth_token')?.value;
 
-  // Handle public paths
   if (isPublicPath(pathname)) {
-    // Redirect authenticated users from auth pages to dashboard
     if (token && (pathname === '/login' || pathname === '/register')) {
-      const redirectUrl =
-        request.nextUrl.searchParams.get('callbackUrl') || '/dashboard';
-      return NextResponse.redirect(new URL(redirectUrl, request.url));
+      return NextResponse.redirect(getRedirectUrl(request, '/dashboard'));
     }
     return NextResponse.next();
   }
 
-  // Handle protected paths
-  if (isProtectedPath(pathname)) {
-    // Handle unauthenticated users
-    if (!token) {
-      const searchParams = new URLSearchParams({
-        callbackUrl: pathname,
-        error: 'Please log in to access this page'
-      });
-      return NextResponse.redirect(
-        getRedirectUrl(request, `/login?${searchParams}`)
-      );
-    }
-
-    try {
-      // Decode and verify token
-      const decoded = jwtDecode<{ roles: string[] }>(token);
-      const userRoles = decoded.roles || [];
-
-      // Handle unauthorized access
-      if (!hasRequiredRole(userRoles, pathname)) {
-        const searchParams = new URLSearchParams({
-          error: 'You do not have permission to access this page'
-        });
-        return NextResponse.redirect(
-          getRedirectUrl(request, `/unauthorized?${searchParams}`)
-        );
-      }
-    } catch (error) {
-      // Invalid token
-      const searchParams = new URLSearchParams({
-        callbackUrl: pathname,
-        error: 'Your session has expired. Please log in again.'
-      });
-      return NextResponse.redirect(
-        getRedirectUrl(request, `/login?${searchParams}`)
-      );
-    }
+  if (!token) {
+    const searchParams = new URLSearchParams({
+      callbackUrl: pathname
+    });
+    return NextResponse.redirect(
+      getRedirectUrl(request, `/login?${searchParams}`)
+    );
   }
 
-  return NextResponse.next();
+  try {
+    const decoded = jwtDecode<{ roles: string[] }>(token);
+    const userRoles = decoded.roles;
+
+    if (isProtectedPath(pathname) && !hasRequiredRole(userRoles, pathname)) {
+      return NextResponse.redirect(getRedirectUrl(request, '/'));
+    }
+
+    return NextResponse.next();
+  } catch {
+    const searchParams = new URLSearchParams({
+      error: 'Invalid token. Please login again.',
+      callbackUrl: pathname
+    });
+    return NextResponse.redirect(
+      getRedirectUrl(request, `/login?${searchParams}`)
+    );
+  }
 }
 
 export const config = {

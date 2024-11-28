@@ -7,39 +7,45 @@ import { AuthState, LoginRequest, UserDetails } from '@/types/auth';
 
 const initialState: AuthState = {
   user: null,
-  accessToken: null,
-  refreshToken: null,
+  tokens: null,
   isAuthenticated: false,
   isLoading: true
 };
 
 export const useAuth = () => {
   const router = useRouter();
-  const [authState, setAuthState] = useState<AuthState>(initialState);
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    tokens: null,
+    isAuthenticated: false,
+    isLoading: true
+  });
 
   const initialize = useCallback(async () => {
     try {
-      if (authService.isAuthenticated()) {
-        const user = await authService.getCurrentUser();
-        if (user) {
-          setAuthState({
-            user,
-            accessToken: authService.getAccessToken(),
-            refreshToken: null, // We don't expose refresh token to the state
-            isAuthenticated: true,
-            isLoading: false
-          });
-          return;
-        }
+      const isAuth = authService.isAuthenticated();
+      if (!isAuth) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return;
       }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-    }
 
-    setAuthState({
-      ...initialState,
-      isLoading: false
-    });
+      const user = authService.getUserFromCookie();
+      if (!user) {
+        authService.logout();
+        setState((prev) => ({ ...prev, isLoading: false }));
+        return;
+      }
+
+      setState({
+        user,
+        isAuthenticated: true,
+        tokens: null,
+        isLoading: false
+      });
+    } catch (error) {
+      console.error('Failed to initialize auth:', error);
+      setState((prev) => ({ ...prev, isLoading: false }));
+    }
   }, []);
 
   useEffect(() => {
@@ -49,56 +55,47 @@ export const useAuth = () => {
   const login = async (credentials: LoginRequest) => {
     try {
       const response = await authService.login(credentials);
-
-      if (response && response.accessToken) {
-        setAuthState({
-          user: response.user,
-          accessToken: response.accessToken,
-          refreshToken: null,
-          isAuthenticated: true,
-          isLoading: false
-        });
-
-        // Ensure state is updated before navigation
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 100);
-
-        return response;
-      } else {
-        throw new Error('Invalid response from server');
-      }
-    } catch (error) {
-      setAuthState({
-        ...initialState,
+      setState({
+        user: response.user,
+        tokens: response.tokens,
+        isAuthenticated: true,
         isLoading: false
       });
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 100);
+      return response;
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        user: null,
+        tokens: null,
+        isAuthenticated: false
+      }));
       throw error;
     }
   };
 
-  const logout = async () => {
-    try {
-      await authService.logout();
-      setAuthState({
-        ...initialState,
-        isLoading: false
-      });
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+  const logout = () => {
+    authService.logout();
+    setState({
+      user: null,
+      tokens: null,
+      isAuthenticated: false,
+      isLoading: false
+    });
+    router.push('/login');
   };
 
   const updateUser = (user: UserDetails) => {
-    setAuthState((prev) => ({
+    setState((prev) => ({
       ...prev,
       user
     }));
   };
 
   return {
-    ...authState,
+    ...state,
     login,
     logout,
     updateUser

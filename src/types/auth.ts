@@ -4,28 +4,33 @@ export interface LoginRequest {
   rememberMe?: boolean;
 }
 
-export interface LoginResponse {
+export interface UserDetails {
+  userId: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: string;
+  status: string;
+}
+
+export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+  tokenType: string;
+}
+
+export interface LoginResponse {
+  tokens: AuthTokens;
   user: UserDetails;
 }
 
-export interface UserDetails {
-  id: string;
-  email: string;
-  fullName: string;
-  roles: string[];
-}
-
 export interface RefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
+  tokens: AuthTokens;
 }
 
 export interface AuthState {
   user: UserDetails | null;
-  accessToken: string | null;
-  refreshToken: string | null;
+  tokens: AuthTokens | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }

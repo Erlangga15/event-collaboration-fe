@@ -56,7 +56,7 @@ const promotionSchema = z
       .number()
       .min(0, 'Discount value must be greater than or equal to 0')
       .refine(
-        (val) => {
+        (_val) => {
           return true;
         },
         {
