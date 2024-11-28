@@ -4,6 +4,7 @@ import { LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 
+import { useAuthContext } from '@/components/providers/AuthProvider';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const UserMenu = () => {
-  const isAuthenticated = false; // TODO: Replace with actual auth state
+  const { user, isAuthenticated, logout } = useAuthContext();
 
   if (!isAuthenticated) {
     return (
@@ -41,16 +42,21 @@ export const UserMenu = () => {
           aria-label='User menu'
         >
           <Avatar className='size-8'>
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarFallback>
+              {user?.fullName
+                ?.split(' ')
+                .map((n) => n[0])
+                .join('')}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className='w-56' align='end' forceMount>
         <DropdownMenuLabel className='font-normal'>
           <div className='flex flex-col space-y-1'>
-            <p className='text-sm font-medium leading-none'>John Doe</p>
+            <p className='text-sm font-medium leading-none'>{user?.fullName}</p>
             <p className='text-xs leading-none text-muted-foreground'>
-              john@example.com
+              {user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -70,9 +76,9 @@ export const UserMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => logout()}>
           <LogOut className='mr-2 size-4' />
-          Log out
+          Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

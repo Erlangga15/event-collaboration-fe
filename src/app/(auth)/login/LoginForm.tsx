@@ -41,7 +41,6 @@ export const LoginForm = () => {
   const onSubmit = async (data: LoginFormType) => {
     try {
       await login(data);
-      // Router push is handled by the auth hook
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
@@ -106,7 +105,7 @@ export const LoginForm = () => {
           control={form.control}
           name='rememberMe'
           render={({ field }) => (
-            <FormItem className='flex flex-row items-start space-x-3 space-y-0'>
+            <FormItem className='flex flex-row items-start space-x-3 space-y-0 rounded-md'>
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -122,8 +121,8 @@ export const LoginForm = () => {
 
         <Button
           type='submit'
-          disabled={isLoading}
           className='w-full bg-primary-500 text-white hover:bg-primary-600'
+          disabled={isLoading}
         >
           {isLoading && <Icons.spinner className='mr-2 size-4 animate-spin' />}
           Sign In
