@@ -1,13 +1,19 @@
-export function getFromLocalStorage(key: string): string | null {
-  if (typeof window !== 'undefined') {
+export const getFromLocalStorage = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
     return window.localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`Error accessing localStorage for key "${key}":`, error);
+    return null;
   }
-  return null;
-}
+};
 
-export function getFromSessionStorage(key: string): string | null {
-  if (typeof sessionStorage !== 'undefined') {
-    return sessionStorage.getItem(key);
+export const getFromSessionStorage = (key: string): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch (error) {
+    console.warn(`Error accessing sessionStorage for key "${key}":`, error);
+    return null;
   }
-  return null;
-}
+};
