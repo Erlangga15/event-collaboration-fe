@@ -4,41 +4,48 @@ import { NextResponse } from 'next/server';
 
 import { COOKIE_KEYS } from '@/lib/auth';
 
-const PUBLIC_PATHS = ['/login', '/register', '/', '/events'];
-const PROTECTED_PATHS = ['/dashboard', '/events/create'];
-const ROLE_PATHS = {
-  ORGANIZER: ['/dashboard', '/events/create'],
-  ADMIN: ['*']
-};
-
-function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.some((path) => pathname.startsWith(path));
-}
-
-function isProtectedPath(pathname: string) {
-  return PROTECTED_PATHS.some((path) => pathname.startsWith(path));
-}
-
-function hasRequiredRole(userRoles: string[], pathname: string) {
-  if (userRoles.includes('ADMIN')) {
-    return true;
+const ROUTES = {
+  PUBLIC: ['/', '/login', '/register', '/events'] as const,
+  PROTECTED: ['/dashboard', '/events/create'] as const,
+  ROLES: {
+    ORGANIZER: ['/dashboard', '/events/create'] as const,
+    ADMIN: ['*'] as const
   }
-  for (const [role, paths] of Object.entries(ROLE_PATHS)) {
-    if (
+} as const;
+
+const matchesPath = (pathname: string, paths: readonly string[]): boolean =>
+  paths.some((path) => pathname.startsWith(path));
+
+const isPublicPath = (pathname: string): boolean =>
+  matchesPath(pathname, ROUTES.PUBLIC);
+
+const isProtectedPath = (pathname: string): boolean =>
+  matchesPath(pathname, ROUTES.PROTECTED);
+
+const hasRequiredRole = (userRoles: string[], pathname: string): boolean => {
+  if (userRoles.includes('ADMIN')) return true;
+
+  return Object.entries(ROUTES.ROLES).some(
+    ([role, paths]) =>
       paths.some((path) => pathname.startsWith(path)) &&
       userRoles.includes(role)
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
+  );
+};
 
-function getRedirectUrl(request: NextRequest, path: string) {
-  return new URL(path, request.url).toString();
-}
+const createRedirectUrl = (request: NextRequest, path: string): string =>
+  new URL(path, request.url).toString();
 
-export async function middleware(request: NextRequest) {
+const createRedirect = (
+  request: NextRequest,
+  path: string,
+  params?: Record<string, string>
+): NextResponse => {
+  const searchParams = params ? new URLSearchParams(params) : null;
+  const redirectUrl = searchParams ? `${path}?${searchParams}` : path;
+  return NextResponse.redirect(createRedirectUrl(request, redirectUrl));
+};
+
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   if (request.nextUrl.pathname.startsWith('/api')) {
     return NextResponse.next();
   }
@@ -47,19 +54,15 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get(COOKIE_KEYS.AUTH_TOKEN)?.value;
 
   if (isPublicPath(pathname)) {
-    if (token && (pathname === '/login' || pathname === '/register')) {
-      return NextResponse.redirect(getRedirectUrl(request, '/dashboard'));
+    const isAuthPath = pathname === '/login' || pathname === '/register';
+    if (token && isAuthPath) {
+      return createRedirect(request, '/dashboard');
     }
     return NextResponse.next();
   }
 
   if (!token) {
-    const searchParams = new URLSearchParams({
-      callbackUrl: pathname
-    });
-    return NextResponse.redirect(
-      getRedirectUrl(request, `/login?${searchParams}`)
-    );
+    return createRedirect(request, '/login', { callbackUrl: pathname });
   }
 
   try {
@@ -67,21 +70,18 @@ export async function middleware(request: NextRequest) {
     const userRoles = decoded.roles;
 
     if (isProtectedPath(pathname) && !hasRequiredRole(userRoles, pathname)) {
-      return NextResponse.redirect(getRedirectUrl(request, '/'));
+      return createRedirect(request, '/');
     }
 
     return NextResponse.next();
   } catch {
-    const searchParams = new URLSearchParams({
+    return createRedirect(request, '/login', {
       error: 'Invalid token. Please login again.',
       callbackUrl: pathname
     });
-    return NextResponse.redirect(
-      getRedirectUrl(request, `/login?${searchParams}`)
-    );
   }
 }
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)']
-};
+} as const;

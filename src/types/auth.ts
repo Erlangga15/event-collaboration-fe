@@ -34,3 +34,21 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+export interface ApiResponseData {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  userId: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  role: string;
+  status: string;
+}
+
+export interface ApiResponse<T = ApiResponseData> {
+  status: number;
+  message: string;
+  data: T;
+}
