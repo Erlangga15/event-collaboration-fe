@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -10,47 +10,64 @@ import { Icons } from '@/components/shared/Icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-import { SearchSuggestions } from './SearchSuggestions';
-
 interface SearchBarProps {
   className?: string;
   onSearch?: (value: string) => void;
   placeholder?: string;
   variant?: 'default' | 'advanced';
+  defaultValue?: string;
 }
 
 export const SearchBar = ({
   className,
   onSearch,
   placeholder = 'Search events, venues, or cities...',
-  variant = 'default'
+  variant = 'default',
+  defaultValue = ''
 }: SearchBarProps) => {
   const router = useRouter();
-  const [query, setQuery] = React.useState('');
-  const [isFocused, setIsFocused] = React.useState(false);
-  const debouncedQuery = useDebounce(query, 300);
+  const searchParams = useSearchParams();
+  const [query, setQuery] = React.useState(defaultValue);
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const debouncedQuery = useDebounce(query, 1000);
+  const isInitialMount = React.useRef(true);
+
+  React.useEffect(() => {
+    if (isInitialMount.current && variant === 'advanced') {
+      isInitialMount.current = false;
+      const searchTerm = searchParams.get('searchTerm');
+      if (searchTerm && searchTerm !== query) {
+        setQuery(searchTerm);
+      }
+    }
+  }, [searchParams, variant, query]);
+
+  React.useEffect(() => {
+    if (!isInitialMount.current && variant === 'advanced' && onSearch) {
+      onSearch(debouncedQuery);
+    }
+  }, [debouncedQuery, onSearch, variant]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       if (variant === 'default') {
-        router.push(`/events?q=${encodeURIComponent(query.trim())}`);
-        setIsFocused(false);
+        router.push(
+          `/events/search?searchTerm=${encodeURIComponent(query.trim())}`
+        );
         inputRef.current?.blur();
-      } else if (onSearch) {
-        onSearch(query.trim());
       }
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
-    setIsLoading(true);
+    setQuery(e.target.value);
+  };
+
+  const handleClear = () => {
+    setQuery('');
     if (variant === 'advanced' && onSearch) {
-      onSearch(value);
+      onSearch('');
     }
   };
 
@@ -64,7 +81,6 @@ export const SearchBar = ({
             type='text'
             value={query}
             onChange={handleChange}
-            onFocus={() => setIsFocused(true)}
             placeholder={placeholder}
             className='h-full flex-1 border-0 bg-transparent p-0'
             ringOnFocus={false}
@@ -74,7 +90,7 @@ export const SearchBar = ({
               type='button'
               variant='ghost'
               size='sm'
-              onClick={() => setQuery('')}
+              onClick={handleClear}
               className='size-6 p-0'
             >
               <Icons.x className='size-4 text-muted-foreground' />
@@ -91,18 +107,6 @@ export const SearchBar = ({
           </Button>
         </div>
       </form>
-
-      {variant === 'default' && isFocused && debouncedQuery.length >= 2 && (
-        <SearchSuggestions
-          query={debouncedQuery}
-          onClose={() => {
-            setIsFocused(false);
-            setIsLoading(false);
-          }}
-          isLoading={isLoading}
-          setIsLoading={setIsLoading}
-        />
-      )}
     </div>
   );
 };

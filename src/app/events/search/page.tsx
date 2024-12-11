@@ -1,60 +1,105 @@
 'use client';
 
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { EventCardSkeleton } from '@/components/home/EventCardSkeleton';
 import { EventGrid } from '@/components/home/EventGrid';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPanel } from '@/components/shared/SearchBar/FilterPanel';
+import { Button } from '@/components/ui/button';
 
-import type { Event } from '@/constant/types/event';
+import type { EventFilter } from '@/services/event';
+import eventApi from '@/services/event';
 
-export default function AdvancedSearchPage() {
-  const [searchResults, setSearchResults] = useState<Event[]>([]);
+import type { Event } from '@/types/event';
+
+const ITEMS_PER_PAGE = 8;
+
+const SearchPage = () => {
+  const searchParams = useSearchParams();
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentFilter, setCurrentFilter] = useState<Partial<EventFilter>>({});
+  const isInitialMount = useRef(true);
 
-  const handleSearch = async (searchTerm: string) => {
-    if (searchTerm.length < 3) return;
-    setIsLoading(true);
-    // TODO: Implement actual search API call
-    // const results = await searchEvents(searchTerm);
-    setIsLoading(false);
-  };
+  const fetchEvents = useCallback(
+    async (filter: Partial<EventFilter>, page = 0) => {
+      setIsLoading(true);
+      try {
+        const response = await eventApi.getEvents({
+          ...filter,
+          page,
+          size: ITEMS_PER_PAGE
+        });
 
-  const handleFilterChange = async (filters: any) => {
-    setIsLoading(true);
-    // TODO: Implement actual filter API call
-    // const results = await filterEvents(filters);
-    setIsLoading(false);
-  };
+        setEvents(response.content);
+        setTotalPages(response.totalPages);
+        setCurrentPage(response.number);
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
 
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-          {Array.from({ length: 8 }).map((_, index) => (
-            <EventCardSkeleton key={index} />
-          ))}
-        </div>
-      );
+  const buildFilter = useCallback(
+    (
+      params: {
+        searchTerm?: string;
+        additionalFilters?: Partial<EventFilter>;
+      } = {}
+    ) => {
+      const { searchTerm, additionalFilters = {} } = params;
+      const category = searchParams.get('category');
+
+      return {
+        ...(searchTerm && searchTerm.length >= 3 && { searchTerm }),
+        ...(category && { category }),
+        ...additionalFilters
+      };
+    },
+    [searchParams]
+  );
+
+  const handleSearch = useCallback(
+    (searchTerm: string) => {
+      const newFilter = buildFilter({ searchTerm });
+      setCurrentFilter(newFilter);
+      fetchEvents(newFilter, 0);
+    },
+    [buildFilter, fetchEvents]
+  );
+
+  const handleFilterChange = useCallback(
+    (filters: Partial<EventFilter>) => {
+      const newFilter = buildFilter({ additionalFilters: filters });
+      setCurrentFilter(newFilter);
+      fetchEvents(newFilter, 0);
+    },
+    [buildFilter, fetchEvents]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      fetchEvents(currentFilter, page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    [currentFilter, fetchEvents]
+  );
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      const searchTerm = searchParams.get('searchTerm');
+      const newFilter = buildFilter({ searchTerm: searchTerm ?? undefined });
+      setCurrentFilter(newFilter);
+      fetchEvents(newFilter, 0);
     }
-
-    if (searchResults.length === 0) {
-      return (
-        <div className='flex h-64 items-center justify-center text-gray-500'>
-          No events found. Try adjusting your search or filters.
-        </div>
-      );
-    }
-
-    return (
-      <EventGrid
-        className='w-full'
-        events={searchResults}
-        isLoading={isLoading}
-      />
-    );
-  };
+  }, [searchParams, fetchEvents, buildFilter]);
 
   return (
     <main className='layout min-h-screen py-12'>
@@ -68,7 +113,6 @@ export default function AdvancedSearchPage() {
       </div>
 
       <div className='grid gap-8 lg:grid-cols-[300px,1fr]'>
-        {/* Filter Panel */}
         <aside>
           <FilterPanel
             onFilterChange={handleFilterChange}
@@ -76,18 +120,62 @@ export default function AdvancedSearchPage() {
           />
         </aside>
 
-        {/* Search Results */}
         <div className='space-y-6'>
           <SearchBar
             onSearch={handleSearch}
             className='mb-6'
             placeholder='Search events by name, description, or location...'
             variant='advanced'
+            defaultValue={searchParams.get('searchTerm') || ''}
           />
 
-          {renderContent()}
+          <EventGrid events={events} isLoading={isLoading} />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className='mt-8 flex items-center justify-center gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 0 || isLoading}
+                className='size-8 p-0'
+              >
+                {'<'}
+              </Button>
+
+              {Array.from({ length: totalPages }, (_, i) => (
+                <Button
+                  key={i}
+                  variant={currentPage === i ? 'default' : 'outline'}
+                  size='sm'
+                  onClick={() => handlePageChange(i)}
+                  disabled={isLoading}
+                  className={`size-8 p-0 ${
+                    currentPage === i
+                      ? 'bg-primary-500 text-white hover:bg-primary-600'
+                      : ''
+                  }`}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages - 1 || isLoading}
+                className='size-8 p-0'
+              >
+                {'>'}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </main>
   );
-}
+};
+
+export default SearchPage;
