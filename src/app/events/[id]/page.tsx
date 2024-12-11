@@ -3,16 +3,16 @@
 import { notFound } from 'next/navigation';
 import * as React from 'react';
 
-import { UPCOMING_EVENTS } from '@/constant/data/events';
-import type { Event } from '@/constant/types/event';
+import eventApi from '@/services/event';
 
 import { EventDetails } from './components/EventDetails';
 import { EventDetailsSkeleton } from './components/EventDetailsSkeleton';
 import { EventHeader } from './components/EventHeader';
 import { EventHeaderSkeleton } from './components/EventHeaderSkeleton';
-import { ReviewSection } from './components/ReviewSection';
 import { TicketSelection } from './components/TicketSelection';
 import { TicketSelectionSkeleton } from './components/TicketSelectionSkeleton';
+
+import type { Event } from '@/types/event';
 
 interface EventPageProps {
   params: {
@@ -20,14 +20,14 @@ interface EventPageProps {
   };
 }
 
-// Separate the event fetching logic
-const fetchEvent = (id: string): Promise<Event | null> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const foundEvent = UPCOMING_EVENTS.find((e) => e.id === id);
-      resolve(foundEvent || null);
-    }, 500);
-  });
+const fetchEvent = async (id: string): Promise<Event | null> => {
+  try {
+    const event = await eventApi.getEventById(id);
+    return event;
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    return null;
+  }
 };
 
 export default function EventPage({ params }: Readonly<EventPageProps>) {
@@ -68,11 +68,10 @@ export default function EventPage({ params }: Readonly<EventPageProps>) {
     <main className='min-h-[calc(100vh-4rem)]'>
       <EventHeader event={event} />
       <div className='layout grid gap-8 py-8 lg:grid-cols-3'>
-        <div className='space-y-8 lg:col-span-2'>
+        <div className='lg:col-span-2'>
           <EventDetails event={event} />
-          <ReviewSection eventId={event.id} />
         </div>
-        <div>
+        <div className='lg:sticky lg:top-8'>
           <TicketSelection event={event} />
         </div>
       </div>

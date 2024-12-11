@@ -3,28 +3,31 @@
 import Image from 'next/image';
 import * as React from 'react';
 
-import { formatToIDR } from '@/lib/utils';
+import { formatToIDDate, formatToIDR } from '@/lib/utils';
 
 import { Icons } from '@/components/shared/Icons';
 
+import type { Event } from '@/types/event';
+
 interface EventHeaderProps {
-  event: {
-    title: string;
-    image: string;
-    date: string;
-    location: string;
-    price: number;
-    category: string;
-  };
+  event: Event;
 }
 
 export const EventHeader = ({ event }: EventHeaderProps) => {
+  const lowestPrice =
+    event.tickets.length > 0
+      ? Math.min(...event.tickets.map((ticket) => ticket.price))
+      : null;
+
   return (
     <section className='relative'>
       <div className='relative min-h-[500px] w-full overflow-hidden bg-black/60'>
         <Image
-          src={event.image}
-          alt={event.title}
+          src={
+            event.image ??
+            'https://images.unsplash.com/photo-1540575467063-178a50c2df87'
+          }
+          alt={event.name}
           fill
           className='object-cover opacity-60'
           priority
@@ -37,23 +40,29 @@ export const EventHeader = ({ event }: EventHeaderProps) => {
                 {event.category}
               </div>
               <h1 className='font-heading text-3xl font-bold text-white sm:text-4xl md:text-5xl lg:max-w-3xl'>
-                {event.title}
+                {event.name}
               </h1>
             </div>
 
             <div className='flex flex-col gap-4 text-white sm:flex-row sm:items-center sm:gap-8'>
               <div className='flex items-center gap-2'>
                 <Icons.calendar className='size-5' />
-                <span className='text-lg'>{event.date}</span>
+                <span className='text-lg'>
+                  {formatToIDDate(event.startDate)}
+                </span>
               </div>
               <div className='flex items-center gap-2'>
                 <Icons.mapPin className='size-5' />
-                <span className='text-lg'>{event.location}</span>
+                <span className='text-lg'>{event.venueName}</span>
               </div>
               <div className='flex items-center gap-2'>
                 <Icons.ticket className='size-5' />
                 <span className='text-lg font-medium'>
-                  {event.price === 0 ? 'Free' : formatToIDR(event.price)}
+                  {event.tickets.length === 0
+                    ? 'Tickets Unavailable'
+                    : lowestPrice === 0
+                      ? 'Free'
+                      : formatToIDR(lowestPrice!)}
                 </span>
               </div>
             </div>

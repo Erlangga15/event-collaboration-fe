@@ -1,90 +1,73 @@
 'use client';
 
-import Image from 'next/image';
-import * as React from 'react';
-
+import { Icons } from '@/components/shared/Icons';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+
+import type { Event } from '@/types/event';
 
 interface EventDetailsProps {
-  event: {
-    description: string;
-    organizer: {
-      name: string;
-      image: string;
-      description: string;
-    };
-    schedule: Array<{
-      time: string;
-      title: string;
-      description: string;
-    }>;
-  };
+  event: Event;
 }
 
 export const EventDetails = ({ event }: EventDetailsProps) => {
   return (
-    <Card>
-      <Tabs defaultValue='about' className='w-full'>
-        <TabsList className='w-full justify-start rounded-none border-b bg-transparent p-0'>
-          <TabsTrigger
-            value='about'
-            className='rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary-500 data-[state=active]:bg-transparent'
-          >
-            About
-          </TabsTrigger>
-          <TabsTrigger
-            value='schedule'
-            className='rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary-500 data-[state=active]:bg-transparent'
-          >
-            Schedule
-          </TabsTrigger>
-          <TabsTrigger
-            value='organizer'
-            className='rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary-500 data-[state=active]:bg-transparent'
-          >
-            Organizer
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value='about' className='p-6'>
+    <div className='space-y-8'>
+      {/* About Section */}
+      <Card className='p-6'>
+        <div className='space-y-6'>
+          <div className='flex items-center gap-4'>
+            <h2 className='text-xl font-semibold'>About this event</h2>
+          </div>
           <div
             className='prose prose-gray dark:prose-invert max-w-none'
             dangerouslySetInnerHTML={{ __html: event.description }}
           />
-        </TabsContent>
-        <TabsContent value='schedule' className='p-6'>
-          <div className='space-y-6'>
-            {event.schedule.map((item, index) => (
-              <div key={index} className='flex gap-4'>
-                <div className='w-24 shrink-0 font-medium'>{item.time}</div>
-                <div className='space-y-1'>
-                  <h3 className='font-medium'>{item.title}</h3>
-                  <p className='text-sm text-muted-foreground'>
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-        <TabsContent value='organizer' className='p-6'>
-          <div className='flex items-center gap-4'>
-            <Image
-              src={event.organizer.image}
-              alt={event.organizer.name}
-              width={80}
-              height={80}
-              className='rounded-full'
-            />
-            <div>
-              <h3 className='font-medium'>{event.organizer.name}</h3>
+        </div>
+      </Card>
+
+      {/* Organizer Section */}
+      <Card className='p-6'>
+        <div className='space-y-6'>
+          <div className='flex items-center justify-between'>
+            <div className='space-y-1'>
+              <h2 className='text-xl font-semibold'>Hosted by</h2>
               <p className='text-sm text-muted-foreground'>
-                {event.organizer.description}
+                Learn more about the organizer
               </p>
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
-    </Card>
+
+          <Separator className='bg-gray-200' />
+
+          <div className='space-y-4'>
+            <div className='flex items-center gap-4'>
+              <div className='flex size-12 items-center justify-center rounded-full bg-primary-50 text-primary-500'>
+                <Icons.user className='size-6' />
+              </div>
+              <div>
+                <h3 className='font-medium'>{event.organizer.fullName}</h3>
+                <p className='text-sm text-muted-foreground'>Event Organizer</p>
+              </div>
+            </div>
+
+            <div className='grid gap-4 rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-900'>
+              <div className='flex items-center gap-3'>
+                <Icons.mail className='size-4 text-primary-500' />
+                <span>{event.organizer.email}</span>
+              </div>
+              <div className='flex items-center gap-3'>
+                <Icons.phone className='size-4 text-primary-500' />
+                <span>{event.organizer.phone}</span>
+              </div>
+              <div className='flex items-center gap-3'>
+                <Icons.info className='size-4 text-primary-500' />
+                <span>Status: {event.organizer.status}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 };

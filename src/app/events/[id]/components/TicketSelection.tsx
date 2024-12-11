@@ -19,18 +19,25 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+
+import type { Event } from '@/types/event';
 
 const ticketSchema = z.object({
+  ticketId: z.string().min(1, 'Please select a ticket'),
   quantity: z.number().min(1, 'Minimum 1 ticket').max(10, 'Maximum 10 tickets')
 });
 
 type TicketFormValues = z.infer<typeof ticketSchema>;
 
 interface TicketSelectionProps {
-  event: {
-    price: number;
-    availableTickets: number;
-  };
+  event: Event;
 }
 
 export const TicketSelection = ({ event }: TicketSelectionProps) => {
@@ -41,14 +48,19 @@ export const TicketSelection = ({ event }: TicketSelectionProps) => {
     }
   });
 
+  const selectedTicketId = form.watch('ticketId');
   const quantity = form.watch('quantity');
-  const subtotal = event.price * quantity;
+
+  const selectedTicket = event.tickets.find(
+    (ticket) => ticket.id === selectedTicketId
+  );
+  const subtotal = selectedTicket ? selectedTicket.price * quantity : 0;
   const serviceFee = subtotal * 0.1;
   const total = subtotal + serviceFee;
 
   // eslint-disable-next-line unused-imports/no-unused-vars
   const onSubmit = (data: TicketFormValues) => {
-    // Handle ticket purchase
+    console.log('Form submitted:', data);
   };
 
   return (
@@ -57,12 +69,43 @@ export const TicketSelection = ({ event }: TicketSelectionProps) => {
         <div className='space-y-2'>
           <h3 className='font-medium'>Select Tickets</h3>
           <p className='text-sm text-muted-foreground'>
-            {event.availableTickets} tickets remaining
+            {event.tickets.length} ticket types available
           </p>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+            <FormField
+              control={form.control}
+              name='ticketId'
+              render={({ field }) => (
+                <FormItem>
+                  <Label>Ticket Type</Label>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select a ticket type' />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {event.tickets.map((ticket) => (
+                        <SelectItem key={ticket.id} value={ticket.id}>
+                          {ticket.name} -{' '}
+                          {ticket.price === 0
+                            ? 'Free'
+                            : formatToIDR(ticket.price)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name='quantity'
@@ -132,6 +175,7 @@ export const TicketSelection = ({ event }: TicketSelectionProps) => {
             <Button
               type='submit'
               className='w-full bg-primary-500 text-white hover:bg-primary-600'
+              disabled={!selectedTicketId}
             >
               Get Tickets
             </Button>
