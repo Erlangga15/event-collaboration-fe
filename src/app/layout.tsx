@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { Encode_Sans, Mulish } from 'next/font/google';
-import * as React from 'react';
+import { Toaster } from 'sonner';
 
 import '@/styles/globals.css';
 
@@ -48,13 +48,13 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: [`${siteConfig.url}/images/og.jpg`]
   }
-};
+} as const;
 
-export default function RootLayout({
-  children
-}: Readonly<{
+interface RootLayoutProps {
   children: React.ReactNode;
-}>) {
+}
+
+export const RootLayout = ({ children }: Readonly<RootLayoutProps>) => {
   return (
     <html lang='en' className={`${encodeSans.variable} ${mulish.variable}`}>
       <body className='min-h-screen bg-background font-body antialiased'>
@@ -64,8 +64,19 @@ export default function RootLayout({
           }}
         >
           <MainLayout>{children}</MainLayout>
+          <Toaster
+            position='top-center'
+            toastOptions={{
+              style: {
+                background: 'white',
+                color: '#3b82f6'
+              }
+            }}
+          />
         </Providers>
       </body>
     </html>
   );
-}
+};
+
+export default RootLayout;

@@ -13,11 +13,6 @@ export default function ErrorComponent({
 }: Readonly<{
   error: Error & { digest?: string };
 }>) {
-  React.useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.error(error);
-  }, [error]);
-
   return (
     <section className='bg-white'>
       <div className='layout flex min-h-[calc(100vh-64px)] flex-col items-center justify-center text-center'>
