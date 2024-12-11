@@ -35,3 +35,9 @@ export const formatToIDDate = (
 
   return formatter.format(dateObj);
 };
+
+export const formatToUTCString = (date: Date): string => {
+  const offset = date.getTimezoneOffset();
+  const adjustedDate = new Date(date.getTime() - offset * 60 * 1000);
+  return adjustedDate.toISOString();
+};

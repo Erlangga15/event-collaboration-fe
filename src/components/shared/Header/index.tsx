@@ -21,8 +21,7 @@ import {
 
 const navigation = [
   { name: 'Browse Events', href: '/events/search' },
-  { name: 'Create Event', href: '/events/create' },
-  { name: 'About', href: '/about' }
+  { name: 'Create Event', href: '/events/create' }
 ];
 
 export const Header = () => {
