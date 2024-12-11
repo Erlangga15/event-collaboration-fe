@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import * as React from 'react';
 
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 
@@ -7,10 +6,15 @@ import { LoginForm } from './LoginForm';
 
 export const metadata: Metadata = {
   title: 'Login',
-  description: 'Login to your account'
-};
+  description: 'Login to your account',
+  openGraph: {
+    title: 'Login | EventHub',
+    description: 'Login to your EventHub account',
+    type: 'website'
+  }
+} as const;
 
-export default function LoginPage() {
+const LoginPage = () => {
   return (
     <AuthLayout
       heading='Welcome back'
@@ -23,4 +27,6 @@ export default function LoginPage() {
       <LoginForm />
     </AuthLayout>
   );
-}
+};
+
+export default LoginPage;

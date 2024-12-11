@@ -1,9 +1,10 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter, useSearchParams } from 'next/navigation';
-import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { LoginFormType, loginSchema } from '@/lib/validations/auth-schema';
 
@@ -22,11 +23,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 
+import { type ApiErrorResponse } from '@/types/auth';
+
+interface FormError {
+  field?: keyof LoginFormType;
+  message: string;
+}
+
 export const LoginForm = () => {
   const { login, isLoading } = useAuthContext();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard';
   const error = searchParams.get('error');
 
   const form = useForm<LoginFormType>({
@@ -38,19 +44,47 @@ export const LoginForm = () => {
     }
   });
 
-  const onSubmit = async (data: LoginFormType) => {
-    try {
-      await login(data);
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        'Invalid email or password';
-      form.setError('root', {
-        message: errorMessage
-      });
+  const handleError = useCallback((error: unknown): FormError => {
+    if (error instanceof Error) {
+      if (
+        error.cause &&
+        typeof error.cause === 'object' &&
+        'response' in error.cause
+      ) {
+        const apiError = error.cause as ApiErrorResponse;
+        if (apiError.response?.data?.message) {
+          return {
+            message: apiError.response.data.message
+          };
+        }
+      }
+      return {
+        message: error.message
+      };
     }
-  };
+    return {
+      message: 'Invalid email or password'
+    };
+  }, []);
+
+  const onSubmit = useCallback(
+    async (data: LoginFormType) => {
+      try {
+        await login(data);
+        toast.success('Login successful');
+      } catch (error) {
+        const formError = handleError(error);
+        toast.error('Authentication Failed', {
+          description: formError.message,
+          duration: 3000
+        });
+        form.setError('root', {
+          message: formError.message
+        });
+      }
+    },
+    [form, handleError, login]
+  );
 
   return (
     <Form {...form}>
@@ -76,7 +110,12 @@ export const LoginForm = () => {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type='email' placeholder='Enter your email' {...field} />
+                <Input
+                  type='email'
+                  placeholder='Enter your email'
+                  autoComplete='email'
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -93,6 +132,7 @@ export const LoginForm = () => {
                 <Input
                   type='password'
                   placeholder='Enter your password'
+                  autoComplete='current-password'
                   {...field}
                 />
               </FormControl>
