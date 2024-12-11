@@ -1,6 +1,7 @@
 'use client';
 
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 import { formatToIDR } from '@/lib/utils';
 
@@ -46,18 +47,18 @@ export function SummaryForm() {
               {basicDetails.description}
             </p>
           </div>
-          {basicDetails.tags && basicDetails.tags.length > 0 && (
+          {basicDetails.imageUrl && (
             <div className='space-y-2'>
-              <Label>Tags</Label>
-              <div className='flex flex-wrap gap-2'>
-                {basicDetails.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className='bg-primary/10 text-primary rounded-full px-2 py-1 text-xs'
-                  >
-                    {tag}
-                  </span>
-                ))}
+              <Label>Event Image</Label>
+              <div className='relative aspect-video w-full overflow-hidden rounded-lg'>
+                <Image
+                  src={basicDetails.imageUrl}
+                  alt={basicDetails.title || 'Event image'}
+                  fill
+                  className='object-cover'
+                  sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                  priority={false}
+                />
               </div>
             </div>
           )}
@@ -115,20 +116,6 @@ export function SummaryForm() {
               {dateLocation.address || '-'}
             </p>
           </div>
-          <div className='grid gap-4 sm:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label>City</Label>
-              <p className='text-sm text-muted-foreground'>
-                {dateLocation.city || '-'}
-              </p>
-            </div>
-            <div className='space-y-2'>
-              <Label>Country</Label>
-              <p className='text-sm text-muted-foreground'>
-                {dateLocation.country || '-'}
-              </p>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
@@ -146,11 +133,9 @@ export function SummaryForm() {
                     {ticket.name || `Ticket ${index + 1}`}
                   </Label>
                   <span className='text-sm font-medium'>
-                    {ticket.type === 'paid'
+                    {ticket.type === 'PAID'
                       ? formatToIDR(ticket.price || 0)
-                      : ticket.type === 'free'
-                        ? 'Free'
-                        : 'Donation'}
+                      : 'Free'}
                   </span>
                 </div>
                 <div className='grid gap-4 sm:grid-cols-2'>
@@ -195,20 +180,20 @@ export function SummaryForm() {
                 <Label className='text-base'>
                   Code:{' '}
                   <span className='font-semibold'>
-                    {promotions.promotion.code}s
+                    {promotions.promotion.code}
                   </span>
                 </Label>
                 <span className='text-sm font-medium'>
-                  {promotions.promotion.type === 'percentage'
-                    ? `${promotions.promotion.value}% off`
-                    : formatToIDR(promotions.promotion.value)}
+                  {promotions.promotion.type === 'PERCENTAGE'
+                    ? `${promotions.promotion.amount}% off`
+                    : formatToIDR(promotions.promotion.amount)}
                 </span>
               </div>
               <div className='grid gap-4 sm:grid-cols-2'>
                 <div className='space-y-2'>
                   <Label>Type</Label>
                   <p className='text-sm capitalize text-muted-foreground'>
-                    {promotions.promotion.type === 'percentage'
+                    {promotions.promotion.type === 'PERCENTAGE'
                       ? 'Percentage Discount'
                       : 'Fixed Amount'}
                   </p>
@@ -217,6 +202,24 @@ export function SummaryForm() {
                   <Label>Maximum Uses</Label>
                   <p className='text-sm text-muted-foreground'>
                     {promotions.promotion.maxUses} times
+                  </p>
+                </div>
+              </div>
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label>Start Date</Label>
+                  <p className='text-sm text-muted-foreground'>
+                    {promotions.promotion.startDate
+                      ? format(new Date(promotions.promotion.startDate), 'PPP')
+                      : '-'}
+                  </p>
+                </div>
+                <div className='space-y-2'>
+                  <Label>End Date</Label>
+                  <p className='text-sm text-muted-foreground'>
+                    {promotions.promotion.endDate
+                      ? format(new Date(promotions.promotion.endDate), 'PPP')
+                      : '-'}
                   </p>
                 </div>
               </div>

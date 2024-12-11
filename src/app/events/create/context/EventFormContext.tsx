@@ -10,16 +10,47 @@ import {
   ticketsSchema
 } from '@/lib/validations/event-schema';
 
+import type { EventCategory, TicketType } from '@/types/event';
+
 type BasicDetails = z.infer<typeof basicDetailsSchema>;
 type DateLocation = z.infer<typeof dateLocationSchema>;
 type Tickets = z.infer<typeof ticketsSchema>;
 type Promotions = z.infer<typeof promotionsSchema>;
 
 interface EventFormState {
-  basicDetails: Partial<BasicDetails>;
-  dateLocation: Partial<DateLocation>;
-  tickets: Partial<Tickets>;
-  promotions: Partial<Promotions>;
+  basicDetails: Partial<{
+    title: string;
+    description: string;
+    category: EventCategory;
+    imageUrl?: string;
+  }>;
+  dateLocation: Partial<{
+    startDate: Date;
+    endDate: Date;
+    startTime: string;
+    endTime: string;
+    venue: string;
+    address: string;
+  }>;
+  tickets: Partial<{
+    tickets: Array<{
+      name: string;
+      type: TicketType;
+      price?: number;
+      quantity: number;
+      description?: string;
+    }>;
+  }>;
+  promotions: Partial<{
+    promotion: {
+      code: string;
+      type: 'PERCENTAGE' | 'FIXED';
+      amount: number;
+      maxUses: number;
+      startDate: Date;
+      endDate: Date;
+    };
+  }>;
 }
 
 type EventFormAction =
@@ -32,8 +63,7 @@ const initialState: EventFormState = {
   basicDetails: {
     title: '',
     description: '',
-    category: '',
-    tags: [],
+    category: 'MUSIC',
     imageUrl: ''
   },
   dateLocation: {
@@ -41,17 +71,14 @@ const initialState: EventFormState = {
     endDate: new Date(),
     startTime: '',
     endTime: '',
-    timezone: '',
     venue: '',
-    address: '',
-    city: '',
-    country: ''
+    address: ''
   },
   tickets: {
     tickets: [
       {
         name: '',
-        type: 'free',
+        type: 'FREE',
         price: 0,
         quantity: 0,
         description: ''
@@ -61,9 +88,11 @@ const initialState: EventFormState = {
   promotions: {
     promotion: {
       code: '',
-      type: 'percentage',
-      value: 0,
-      maxUses: 1
+      type: 'PERCENTAGE',
+      amount: 0,
+      maxUses: 1,
+      startDate: new Date(),
+      endDate: new Date()
     }
   }
 };

@@ -28,13 +28,14 @@ import {
 
 import { useEventForm } from '../../context/EventFormContext';
 
+import type { TicketType } from '@/types/event';
+
 type FormData = z.infer<typeof ticketsSchema>;
 
-const ticketTypes = [
-  { value: 'free', label: 'Free' },
-  { value: 'paid', label: 'Paid' },
-  { value: 'donation', label: 'Donation' }
-] as const;
+const ticketTypes: Array<{ value: TicketType; label: string }> = [
+  { value: 'FREE', label: 'Free' },
+  { value: 'PAID', label: 'Paid' }
+];
 
 export function TicketsForm() {
   const { state, dispatch } = useEventForm();
@@ -45,7 +46,7 @@ export function TicketsForm() {
       tickets: state.tickets.tickets || [
         {
           name: '',
-          type: 'free',
+          type: 'FREE',
           price: 0,
           quantity: 0,
           description: ''
@@ -59,7 +60,6 @@ export function TicketsForm() {
     control: form.control
   });
 
-  // Watch form values and update context
   useEffect(() => {
     const subscription = form.watch((value) => {
       if (value.tickets) {
@@ -68,7 +68,7 @@ export function TicketsForm() {
             ...ticket,
             price: ticket?.price ?? 0,
             quantity: ticket?.quantity ?? 0,
-            type: ticket?.type ?? 'free',
+            type: ticket?.type ?? 'FREE',
             name: ticket?.name ?? '',
             description: ticket?.description ?? ''
           }))
@@ -79,7 +79,7 @@ export function TicketsForm() {
               ...ticket,
               price: ticket?.price ?? 0,
               quantity: ticket?.quantity ?? 0,
-              type: ticket?.type ?? 'free',
+              type: ticket?.type ?? 'FREE',
               name: ticket?.name ?? '',
               description: ticket?.description ?? ''
             })) || []
@@ -163,7 +163,7 @@ export function TicketsForm() {
                   )}
                 />
 
-                {form.watch(`tickets.${index}.type`) === 'paid' && (
+                {form.watch(`tickets.${index}.type`) === 'PAID' && (
                   <FormField
                     control={form.control}
                     name={`tickets.${index}.price`}
@@ -188,7 +188,7 @@ export function TicketsForm() {
                                 field.onChange(value);
                               }}
                               disabled={
-                                form.watch(`tickets.${index}.type`) !== 'paid'
+                                form.watch(`tickets.${index}.type`) !== 'PAID'
                               }
                             />
                           </div>
@@ -248,12 +248,11 @@ export function TicketsForm() {
         <Button
           type='button'
           variant='outline'
-          size='sm'
-          className='mt-2'
+          className='w-full'
           onClick={() =>
             append({
               name: '',
-              type: 'free',
+              type: 'FREE',
               price: 0,
               quantity: 0,
               description: ''

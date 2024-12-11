@@ -28,15 +28,18 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { useEventForm } from '../../context/EventFormContext';
 
+import type { EventCategory } from '@/types/event';
+
 type FormData = z.infer<typeof basicDetailsSchema>;
 
-const categories = [
-  { value: 'conference', label: 'Conference' },
-  { value: 'workshop', label: 'Workshop' },
-  { value: 'seminar', label: 'Seminar' },
-  { value: 'concert', label: 'Concert' },
-  { value: 'exhibition', label: 'Exhibition' }
-] as const;
+const categories: Array<{ value: EventCategory; label: string }> = [
+  { value: 'MUSIC', label: 'Music' },
+  { value: 'SPORT', label: 'Sport' },
+  { value: 'ART', label: 'Art' },
+  { value: 'FOOD', label: 'Food' },
+  { value: 'BUSINESS', label: 'Business' },
+  { value: 'EDUCATION', label: 'Education' }
+];
 
 export function BasicDetailsForm() {
   const { state, dispatch } = useEventForm();
@@ -45,17 +48,14 @@ export function BasicDetailsForm() {
     resolver: zodResolver(basicDetailsSchema),
     defaultValues: {
       title: state.basicDetails.title || '',
-      category: state.basicDetails.category || '',
+      category: state.basicDetails.category || 'MUSIC',
       description: state.basicDetails.description || '',
-      tags: state.basicDetails.tags || [],
       imageUrl: state.basicDetails.imageUrl || ''
     }
   });
 
-  // Watch form values and update context
   useEffect(() => {
     const subscription = form.watch((value) => {
-      // Only dispatch if the value is different from current state
       if (JSON.stringify(value) !== JSON.stringify(state.basicDetails)) {
         dispatch({
           type: 'UPDATE_BASIC_DETAILS',
@@ -89,7 +89,11 @@ export function BasicDetailsForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                value={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder='Select a category' />

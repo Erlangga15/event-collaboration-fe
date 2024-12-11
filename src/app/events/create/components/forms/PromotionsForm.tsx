@@ -1,12 +1,17 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+import { cn } from '@/lib/utils';
 import { promotionsSchema } from '@/lib/validations/event-schema';
 
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Form,
   FormControl,
@@ -16,6 +21,11 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -36,30 +46,35 @@ export function PromotionsForm() {
     defaultValues: {
       promotion: state.promotions.promotion || {
         code: '',
-        type: 'percentage',
-        value: 0,
-        maxUses: 1
+        type: 'FIXED',
+        amount: 0,
+        maxUses: 1,
+        startDate: new Date(),
+        endDate: new Date()
       }
     }
   });
 
-  // Watch form values and update context
   useEffect(() => {
     const subscription = form.watch((value) => {
       if (value.promotion) {
         const currentValue = {
           promotion: {
             ...value.promotion,
-            value: value.promotion?.value ?? 0,
-            maxUses: value.promotion?.maxUses ?? 1
+            amount: value.promotion?.amount ?? 0,
+            maxUses: value.promotion?.maxUses ?? 1,
+            startDate: value.promotion?.startDate ?? new Date(),
+            endDate: value.promotion?.endDate ?? new Date()
           }
         };
         const currentState = {
           promotion: state.promotions.promotion
             ? {
                 ...state.promotions.promotion,
-                value: state.promotions.promotion?.value ?? 0,
-                maxUses: state.promotions.promotion?.maxUses ?? 1
+                amount: state.promotions.promotion?.amount ?? 0,
+                maxUses: state.promotions.promotion?.maxUses ?? 1,
+                startDate: state.promotions.promotion?.startDate ?? new Date(),
+                endDate: state.promotions.promotion?.endDate ?? new Date()
               }
             : null
         };
@@ -110,8 +125,8 @@ export function PromotionsForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value='percentage'>Percentage (%)</SelectItem>
-                      <SelectItem value='fixed'>Fixed Amount (Rp)</SelectItem>
+                      <SelectItem value='PERCENTAGE'>Percentage (%)</SelectItem>
+                      <SelectItem value='FIXED'>Fixed Amount (Rp)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -121,17 +136,17 @@ export function PromotionsForm() {
 
             <FormField
               control={form.control}
-              name='promotion.value'
+              name='promotion.amount'
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {form.watch('promotion.type') === 'percentage'
+                    {form.watch('promotion.type') === 'PERCENTAGE'
                       ? 'Discount Percentage'
                       : 'Discount Amount'}
                   </FormLabel>
                   <FormControl>
                     <div className='relative'>
-                      {form.watch('promotion.type') === 'fixed' && (
+                      {form.watch('promotion.type') === 'FIXED' && (
                         <span className='absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>
                           Rp
                         </span>
@@ -139,7 +154,7 @@ export function PromotionsForm() {
                       <Input
                         type='number'
                         className={
-                          form.watch('promotion.type') === 'fixed' ? 'pl-9' : ''
+                          form.watch('promotion.type') === 'FIXED' ? 'pl-9' : ''
                         }
                         {...field}
                         value={field.value === 0 ? '' : field.value}
@@ -149,7 +164,7 @@ export function PromotionsForm() {
                           field.onChange(value);
                         }}
                       />
-                      {form.watch('promotion.type') === 'percentage' && (
+                      {form.watch('promotion.type') === 'PERCENTAGE' && (
                         <span className='absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>
                           %
                         </span>
@@ -179,6 +194,91 @@ export function PromotionsForm() {
                       }}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='promotion.startDate'
+              render={({ field }) => (
+                <FormItem className='flex flex-col'>
+                  <FormLabel>Start Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant='outline'
+                          className={cn(
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, 'PPP')
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className='ml-auto size-4 opacity-50' />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-auto p-0' align='start'>
+                      <Calendar
+                        mode='single'
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date() || date > new Date('2100-01-01')
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='promotion.endDate'
+              render={({ field }) => (
+                <FormItem className='flex flex-col'>
+                  <FormLabel>End Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant='outline'
+                          className={cn(
+                            'w-full pl-3 text-left font-normal',
+                            !field.value && 'text-muted-foreground'
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, 'PPP')
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className='ml-auto size-4 opacity-50' />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-auto p-0' align='start'>
+                      <Calendar
+                        mode='single'
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < form.getValues('promotion.startDate') ||
+                          date > new Date('2100-01-01')
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}

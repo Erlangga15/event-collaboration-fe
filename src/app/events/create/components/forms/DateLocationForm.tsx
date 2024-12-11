@@ -46,13 +46,10 @@ export function DateLocationForm() {
       startTime: state.dateLocation.startTime ?? '',
       endTime: state.dateLocation.endTime ?? '',
       venue: state.dateLocation.venue ?? '',
-      address: state.dateLocation.address ?? '',
-      city: state.dateLocation.city ?? '',
-      country: state.dateLocation.country ?? ''
+      address: state.dateLocation.address ?? ''
     }
   });
 
-  // Watch form values and update context
   useEffect(() => {
     const subscription = form.watch((value) => {
       if (value) {
@@ -229,36 +226,6 @@ export function DateLocationForm() {
             </FormItem>
           )}
         />
-
-        <div className='grid gap-6 sm:grid-cols-2'>
-          <FormField
-            control={form.control}
-            name='city'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <Input placeholder='Enter city' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name='country'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Country</FormLabel>
-                <FormControl>
-                  <Input placeholder='Enter country' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
       </form>
     </Form>
   );
