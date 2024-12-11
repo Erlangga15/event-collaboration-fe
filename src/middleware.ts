@@ -4,77 +4,116 @@ import { NextResponse } from 'next/server';
 
 import { COOKIE_KEYS } from '@/lib/auth';
 
-const ROUTES = {
-  PUBLIC: ['/', '/login', '/register', '/events'] as const,
-  PROTECTED: ['/dashboard', '/events/create'] as const,
-  ROLES: {
-    ORGANIZER: ['/dashboard', '/events/create'] as const,
-    ADMIN: ['*'] as const
-  }
-} as const;
+const PROTECTED_PATHS = ['/dashboard', '/events/create'] as const;
 
-const matchesPath = (pathname: string, paths: readonly string[]): boolean =>
-  paths.some((path) => pathname.startsWith(path));
+const IGNORED_PATHS = [
+  '/_next',
+  '/favicon',
+  '/static',
+  '/images',
+  '.png',
+  '.webp',
+  '.ico',
+  '.css',
+  '.js',
+  'manifest'
+] as const;
 
-const isPublicPath = (pathname: string): boolean =>
-  matchesPath(pathname, ROUTES.PUBLIC);
-
-const isProtectedPath = (pathname: string): boolean =>
-  matchesPath(pathname, ROUTES.PROTECTED);
-
-const hasRequiredRole = (userRoles: string[], pathname: string): boolean => {
-  if (userRoles.includes('ADMIN')) return true;
-
-  return Object.entries(ROUTES.ROLES).some(
-    ([role, paths]) =>
-      paths.some((path) => pathname.startsWith(path)) &&
-      userRoles.includes(role)
-  );
+const shouldLog = (pathname: string): boolean => {
+  return !IGNORED_PATHS.some((path) => pathname.includes(path));
 };
 
-const createRedirectUrl = (request: NextRequest, path: string): string =>
-  new URL(path, request.url).toString();
+const isProtectedPath = (pathname: string): boolean => {
+  return PROTECTED_PATHS.some((path) => pathname.startsWith(path));
+};
+
+interface DecodedToken {
+  sub: string;
+  exp: number;
+  type: string;
+  iat: number;
+  userId: string;
+  scope: string;
+}
+
+const extractRoleFromScope = (scope: string): string => {
+  return scope.replace('ROLE_', '');
+};
+
+const hasRequiredRole = (scope: string, pathname: string): boolean => {
+  if (!scope) return false;
+
+  const role = extractRoleFromScope(scope);
+
+  if (!isProtectedPath(pathname)) return true;
+
+  if (pathname.startsWith('/dashboard')) return true;
+  if (pathname.startsWith('/events/create')) return role === 'ORGANIZER';
+
+  return false;
+};
 
 const createRedirect = (
   request: NextRequest,
   path: string,
   params?: Record<string, string>
 ): NextResponse => {
-  const searchParams = params ? new URLSearchParams(params) : null;
-  const redirectUrl = searchParams ? `${path}?${searchParams}` : path;
-  return NextResponse.redirect(createRedirectUrl(request, redirectUrl));
+  const url = new URL(path, request.url);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+  }
+  return NextResponse.redirect(url);
 };
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
-  if (request.nextUrl.pathname.startsWith('/api')) {
-    return NextResponse.next();
-  }
-
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get(COOKIE_KEYS.AUTH_TOKEN)?.value;
 
-  if (isPublicPath(pathname)) {
-    const isAuthPath = pathname === '/login' || pathname === '/register';
-    if (token && isAuthPath) {
-      return createRedirect(request, '/dashboard');
-    }
+  if (!shouldLog(pathname)) {
     return NextResponse.next();
   }
+
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
+  if (!isProtectedPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  const token = request.cookies.get(COOKIE_KEYS.AUTH_TOKEN)?.value;
+  const refreshToken = request.cookies.get(COOKIE_KEYS.REFRESH_TOKEN)?.value;
 
   if (!token) {
     return createRedirect(request, '/login', { callbackUrl: pathname });
   }
 
   try {
-    const decoded = jwtDecode<{ roles: string[] }>(token);
-    const userRoles = decoded.roles;
+    const decoded = jwtDecode<DecodedToken>(token);
 
-    if (isProtectedPath(pathname) && !hasRequiredRole(userRoles, pathname)) {
-      return createRedirect(request, '/');
+    if (decoded.exp * 1000 < Date.now() && refreshToken) {
+      return NextResponse.next();
     }
 
-    return NextResponse.next();
-  } catch {
+    if (decoded.exp * 1000 < Date.now()) {
+      throw new Error('Token expired');
+    }
+
+    if (!decoded.scope || typeof decoded.scope !== 'string') {
+      throw new Error('Invalid scope in token');
+    }
+
+    if (hasRequiredRole(decoded.scope, pathname)) {
+      return NextResponse.next();
+    }
+
+    return createRedirect(request, '/dashboard');
+  } catch (error) {
+    if (refreshToken) {
+      return NextResponse.next();
+    }
+
     return createRedirect(request, '/login', {
       error: 'Invalid token. Please login again.',
       callbackUrl: pathname
@@ -83,5 +122,5 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)']
+  matcher: ['/dashboard/:path*', '/events/create']
 } as const;

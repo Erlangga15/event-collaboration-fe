@@ -1,3 +1,5 @@
+import { RegisterFormType } from '@/lib/validations/auth-schema';
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -47,8 +49,24 @@ export interface ApiResponseData {
   status: string;
 }
 
+export interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 export interface ApiResponse<T = ApiResponseData> {
   status: number;
   message: string;
   data: T;
+}
+
+export interface AuthContextType extends AuthState {
+  login: (credentials: LoginRequest) => Promise<LoginResponse | undefined>;
+  logout: () => Promise<void>;
+  register: (data: RegisterFormType) => Promise<LoginResponse | undefined>;
+  updateUser: (user: UserDetails) => void;
 }

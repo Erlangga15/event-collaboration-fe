@@ -13,27 +13,29 @@ const INITIAL_AUTH_STATE: Readonly<AuthState> = {
   isLoading: true
 } as const;
 
-const PUBLIC_PATHS = ['/', '/events'] as const;
-type PublicPath = (typeof PUBLIC_PATHS)[number];
+const PROTECTED_PATHS = ['/dashboard', '/events/create'] as const;
+
+const isProtectedPath = (pathname: string): boolean => {
+  return PROTECTED_PATHS.some((path) => pathname.startsWith(path));
+};
+
+const hasAccess = (role: string, pathname: string): boolean => {
+  if (!isProtectedPath(pathname)) return true;
+
+  const roleWithoutPrefix = role.replace('ROLE_', '');
+
+  if (pathname.startsWith('/dashboard')) return true;
+  if (pathname.startsWith('/events/create'))
+    return roleWithoutPrefix === 'ORGANIZER';
+
+  return false;
+};
 
 export const useAuth = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [state, setState] = useState<AuthState>(INITIAL_AUTH_STATE);
-  const isInitialized = useRef(false);
-
-  const setStateAsync = useCallback(
-    (newState: AuthState): Promise<void> =>
-      new Promise((resolve) => {
-        setState((prevState) => ({
-          ...prevState,
-          ...newState,
-          isLoading: newState.isLoading ?? prevState.isLoading
-        }));
-        queueMicrotask(resolve);
-      }),
-    []
-  );
+  const isAuthenticating = useRef(false);
 
   const updateAuthState = useCallback((updates: Partial<AuthState>) => {
     setState((prev) => ({
@@ -55,20 +57,7 @@ export const useAuth = () => {
     [updateAuthState]
   );
 
-  const handleAuthError = useCallback(
-    (error: unknown, defaultMessage: string) => {
-      resetAuthState(false);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error(defaultMessage);
-    },
-    [resetAuthState]
-  );
-
   const initialize = useCallback(async () => {
-    if (isInitialized.current) return;
-
     try {
       const isAuth = authService.isAuthenticated();
       const user = authService.getUserFromCookie();
@@ -87,8 +76,6 @@ export const useAuth = () => {
       });
     } catch {
       resetAuthState(false);
-    } finally {
-      isInitialized.current = true;
     }
   }, [resetAuthState, updateAuthState]);
 
@@ -97,7 +84,6 @@ export const useAuth = () => {
 
     const isAuth = authService.isAuthenticated();
     const user = authService.getUserFromCookie();
-    const isPublicPath = PUBLIC_PATHS.includes(pathname as PublicPath);
 
     if (isAuth && user && !state.isAuthenticated) {
       updateAuthState({
@@ -109,17 +95,28 @@ export const useAuth = () => {
       return;
     }
 
-    if (state.isAuthenticated && !isPublicPath) {
-      if (pathname !== '/dashboard') {
-        router.push('/dashboard');
+    const isAuthPath = pathname === '/login' || pathname === '/register';
+    if (isAuthPath && state.isAuthenticated) {
+      router.replace('/dashboard');
+      return;
+    }
+
+    if (isProtectedPath(pathname) && !state.isAuthenticated) {
+      router.replace('/login');
+      return;
+    }
+
+    if (state.isAuthenticated && state.user) {
+      const hasPermission = hasAccess(state.user.role, pathname);
+      if (!hasPermission && pathname !== '/dashboard') {
+        router.replace('/dashboard');
       }
-    } else if (!state.isAuthenticated && pathname === '/dashboard') {
-      router.push('/login');
     }
   }, [
     pathname,
     state.isAuthenticated,
     state.isLoading,
+    state.user,
     router,
     updateAuthState
   ]);
@@ -130,11 +127,13 @@ export const useAuth = () => {
 
   useEffect(() => {
     handlePathChange();
-  }, [handlePathChange]);
+  }, [handlePathChange, pathname]);
 
   const login = async (credentials: LoginRequest) => {
+    if (isAuthenticating.current) return;
+    isAuthenticating.current = true;
+
     try {
-      updateAuthState({ isLoading: true });
       const response = await authService.login(credentials);
       const user = authService.getUserFromCookie();
 
@@ -142,34 +141,40 @@ export const useAuth = () => {
         throw new Error('User data not found after login');
       }
 
-      await setStateAsync({
+      updateAuthState({
         user,
         tokens: response.tokens,
         isAuthenticated: true,
         isLoading: false
       });
 
+      router.push('/dashboard');
       return response;
     } catch (error) {
-      handleAuthError(error, 'Login failed. Please try again.');
+      updateAuthState({ isLoading: false });
+      throw error;
+    } finally {
+      isAuthenticating.current = false;
     }
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
-      updateAuthState({ isLoading: true });
       await authService.logout();
       resetAuthState(false);
-    } catch {
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
       resetAuthState(false);
-    } finally {
-      router.push('/login');
+      router.replace('/login');
     }
-  };
+  }, [resetAuthState, router]);
 
   const register = async (data: RegisterFormType) => {
+    if (isAuthenticating.current) return;
+    isAuthenticating.current = true;
+
     try {
-      updateAuthState({ isLoading: true });
       const response = await authService.register(data);
       const user = authService.getUserFromCookie();
 
@@ -177,20 +182,20 @@ export const useAuth = () => {
         throw new Error('User data not found after registration');
       }
 
-      await setStateAsync({
+      updateAuthState({
         user,
         tokens: response.tokens,
         isAuthenticated: true,
         isLoading: false
       });
 
-      if (pathname !== '/dashboard') {
-        router.replace('/dashboard');
-      }
-
+      router.push('/dashboard');
       return response;
     } catch (error) {
-      handleAuthError(error, 'Registration failed. Please try again.');
+      updateAuthState({ isLoading: false });
+      throw error;
+    } finally {
+      isAuthenticating.current = false;
     }
   };
 

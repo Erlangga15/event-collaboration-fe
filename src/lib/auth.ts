@@ -109,10 +109,10 @@ const tokenManager = {
         ApiResponse<RefreshTokenResponse>
       >(
         String(API_URL.auth.refresh),
-        {},
+        { refreshToken },
         {
           headers: {
-            Authorization: `Bearer ${refreshToken}`
+            'Content-Type': 'application/json'
           }
         }
       );
@@ -124,8 +124,19 @@ const tokenManager = {
       cookieManager.setAuthTokens(response.data.tokens);
       tokenManager.startRefreshTimer(response.data.tokens.accessToken);
     } catch (error) {
-      cookieManager.clearAuth();
-      throw createAuthError('Failed to refresh authentication token', error);
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        cookieManager.clearAuth();
+      }
+      throw error;
+    }
+  },
+
+  isTokenExpired: (token: string): boolean => {
+    try {
+      const decoded = jwtDecode<{ exp: number }>(token);
+      return decoded.exp * 1000 <= Date.now();
+    } catch {
+      return true;
     }
   }
 };
@@ -143,11 +154,30 @@ const setupInterceptors = (): void => {
     (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
       const token = cookieManager.getAccessToken();
       if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
+        if (!tokenManager.isTokenExpired(token)) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
       return config;
     }
   );
+
+  let isRefreshing = false;
+  let failedQueue: Array<{
+    resolve: (value?: unknown) => void;
+    reject: (reason?: unknown) => void;
+  }> = [];
+
+  const processQueue = (error: Error | null, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+      if (error) {
+        prom.reject(error);
+      } else {
+        prom.resolve(token);
+      }
+    });
+    failedQueue = [];
+  };
 
   axiosInstance.interceptors.response.use(
     (response) => response,
@@ -156,20 +186,62 @@ const setupInterceptors = (): void => {
         _retry?: boolean;
       };
 
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
+      if (
+        !error.response?.status ||
+        error.response.status !== 401 ||
+        !originalRequest ||
+        originalRequest._retry
+      ) {
+        throw error;
+      }
+
+      if (isRefreshing) {
         try {
-          await tokenManager.refresh();
+          await new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          });
           const token = cookieManager.getAccessToken();
           if (token && originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return axiosInstance(originalRequest);
           }
-        } catch {
+        } catch (err) {
+          return Promise.reject(err);
+        }
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await tokenManager.refresh();
+        const token = cookieManager.getAccessToken();
+
+        if (!token) {
+          throw new Error('No token after refresh');
+        }
+
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          processQueue(null, token);
+          return axiosInstance(originalRequest);
+        }
+      } catch (refreshError) {
+        processQueue(refreshError as Error);
+
+        if (
+          axios.isAxiosError(refreshError) &&
+          refreshError.response?.status === 401
+        ) {
           await authService.logout();
           throw createAuthError('Session expired. Please login again.');
         }
+
+        throw refreshError;
+      } finally {
+        isRefreshing = false;
       }
+
       throw error;
     }
   );

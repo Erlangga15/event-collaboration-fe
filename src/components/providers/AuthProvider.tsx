@@ -2,18 +2,7 @@ import { type ReactNode, createContext, useContext } from 'react';
 
 import { useAuth } from '@/hooks/use-auth';
 
-import {
-  type AuthState,
-  type LoginRequest,
-  type LoginResponse,
-  type UserDetails
-} from '@/types/auth';
-
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginRequest) => Promise<LoginResponse | undefined>;
-  logout: () => Promise<void>;
-  updateUser: (user: UserDetails) => void;
-}
+import { type AuthContextType } from '@/types/auth';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -30,11 +19,11 @@ const LoadingSpinner = () => (
 export const AuthProvider = ({ children }: Readonly<AuthProviderProps>) => {
   const auth = useAuth();
 
-  return (
-    <AuthContext.Provider value={auth}>
-      {auth.isLoading ? <LoadingSpinner /> : children}
-    </AuthContext.Provider>
-  );
+  if (auth.isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 };
 
 export const useAuthContext = (): AuthContextType => {
