@@ -1,84 +1,45 @@
 'use client';
 
-import { LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import * as React from 'react';
+import { useEffect } from 'react';
 
 import { useAuthContext } from '@/components/providers/AuthProvider';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
 
-export default function DashboardPage() {
-  const { user, isAuthenticated, logout } = useAuthContext();
+import { MyEvents } from './components/events/MyEvents';
+import { UserProfile } from './components/profile/UserProfile';
+import { TicketList } from './components/tickets/TicketList';
+
+const DashboardPage = () => {
+  const { user, isAuthenticated, isLoading, logout } = useAuthContext();
   const router = useRouter();
 
-  React.useEffect(() => {
-    if (!isAuthenticated) {
+  useEffect(() => {
+    if (!isAuthenticated && !isLoading) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
-  if (!user) {
-    return null;
+  if (isLoading || !isAuthenticated || !user) {
+    return (
+      <div className='flex min-h-screen items-center justify-center'>
+        <div className='border-primary size-12 animate-spin rounded-full border-y-2' />
+      </div>
+    );
   }
 
   return (
     <div className='layout min-h-screen py-10'>
-      <div className='mx-auto max-w-2xl space-y-8'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>
-              Welcome back! Here&apos;s your profile information.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='flex items-center gap-4'>
-              <Avatar className='size-20'>
-                <AvatarFallback className='text-lg'>
-                  {user.fullName
-                    ?.split(' ')
-                    .map((n) => n[0])
-                    .join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className='text-2xl font-bold'>{user.fullName}</h2>
-                <p className='text-muted-foreground'>{user.email}</p>
-              </div>
-            </div>
-
-            <div className='space-y-4'>
-              <div>
-                <h3 className='font-medium'>Account Details</h3>
-                <div className='mt-2 space-y-2'>
-                  <div className='flex items-center gap-2 text-sm'>
-                    <User className='size-4' />
-                    <span className='text-muted-foreground'>Role:</span>
-                    <span>{user.role}</span>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                variant='destructive'
-                className='w-full'
-                onClick={() => logout()}
-              >
-                <LogOut className='size-4' />
-                Sign Out
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className='mx-auto w-full max-w-7xl space-y-6 px-4 md:px-6 lg:grid lg:grid-cols-[350px,1fr] lg:gap-6 lg:space-y-0'>
+        <UserProfile
+          fullName={user.fullName}
+          email={user.email}
+          role={user.role}
+          onLogout={logout}
+        />
+        {user.role === 'CUSTOMER' ? <TicketList /> : <MyEvents />}
       </div>
     </div>
   );
-}
+};
+
+export default DashboardPage;
