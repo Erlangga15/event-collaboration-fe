@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     description: 'Create your EventHub account and start managing events',
     type: 'website'
   }
-} as const;
+};
 
 const RegisterPage = () => {
   return (

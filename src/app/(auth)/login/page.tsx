@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     description: 'Login to your EventHub account',
     type: 'website'
   }
-} as const;
+};
 
 const LoginPage = () => {
   return (

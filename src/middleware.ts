@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { COOKIE_KEYS } from '@/lib/auth';
 
-const PROTECTED_PATHS = ['/dashboard', '/events/create'] as const;
+const PROTECTED_PATHS = ['/dashboard', '/events/create'];
 
 const IGNORED_PATHS = [
   '/_next',
@@ -17,7 +17,7 @@ const IGNORED_PATHS = [
   '.css',
   '.js',
   'manifest'
-] as const;
+];
 
 const shouldLog = (pathname: string): boolean => {
   return !IGNORED_PATHS.some((path) => pathname.includes(path));
@@ -123,4 +123,4 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: ['/dashboard/:path*', '/events/create']
-} as const;
+};

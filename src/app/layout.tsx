@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: [`${siteConfig.url}/images/og.jpg`]
   }
-} as const;
+};
 
 interface RootLayoutProps {
   children: React.ReactNode;
