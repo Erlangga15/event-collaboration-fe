@@ -32,7 +32,7 @@ export const TableRow = ({
 export const TableContainer = ({ children }: TableContainerProps) => (
   <div className='w-full overflow-hidden rounded-lg'>
     <div className='overflow-x-auto'>
-      <div className='inline-block min-w-[720px] w-full'>{children}</div>
+      <div className='inline-block w-full min-w-[720px]'>{children}</div>
     </div>
   </div>
 );
