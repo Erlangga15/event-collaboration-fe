@@ -23,7 +23,7 @@ module.exports = {
     'no-console': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     'react/no-unescaped-entities': 'off',
-
+    'multiline-comment-style': ['warn', 'starred-block'],
     'react/display-name': 'off',
     'react/jsx-curly-brace-presence': [
       'warn',

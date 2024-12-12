@@ -12,6 +12,14 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'plus.unsplash.com'
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost'
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com'
       }
     ]
   },
